@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liar's World - The Village of Perfect Lies</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --panel: #16213e;
+            --border: #0f3460;
+            --gold: #c9a96e;
+            --text: #e0d5c1;
+            --text-dark: #8b7d6b;
+            --danger: #8b3a3a;
+            --success: #3a6b3a;
+            --highlight: #2a4a7f;
+            --chat-bg: #0d1b2a;
+            --input-bg: #1c2a3a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            background-image:
+                radial-gradient(ellipse at top, rgba(201, 169, 110, 0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at bottom, rgba(15, 52, 96, 0.3) 0%, transparent 60%);
+            line-height: 1.6;
+        }
+
+        /* ── 顶部栏 ── */
+        #top-bar {
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.4);
+        }
+        #top-bar h1 {
+            font-size: 1.4em;
+            letter-spacing: 3px;
+            color: var(--gold);
+            text-transform: uppercase;
+            font-weight: normal;
+        }
+        #top-bar .subtitle {
+            font-size: 0.7em;
+            color: var(--text-dark);
+            letter-spacing: 2px;
+        }
+        #user-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        #current-role-display {
+            background: var(--highlight);
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            border: 1px solid var(--border);
+        }
+        .btn {
+            background: var(--border);
+            color: var(--text);
+            border: 1px solid var(--gold);
+            padding: 8px 18px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85em;
+            letter-spacing: 1px;
+            border-radius: 3px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+        .btn:hover {
+            background: var(--highlight);
+            border-color: #e0c080;
+            color: #fff;
+        }
+        .btn.danger {
+            border-color: var(--danger);
+            background: transparent;
+        }
+        .btn.danger:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+        .btn.small {
+            padding: 4px 10px;
+            font-size: 0.7em;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── 主布局 ── */
+        #main-container {
+            display: flex;
+            height: calc(100vh - 110px);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ── 左侧：场景列表 ── */
+        #sidebar {
+            width: 280px;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            padding: 20px 16px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        #sidebar h2 {
+            font-size: 0.9em;
+            letter-spacing: 2px;
+            color: var(--gold);
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            font-weight: normal;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .location-card {
+            background: var(--chat-bg);
+            border: 1px solid var(--border);
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .location-card:hover {
+            border-color: var(--gold);
+            background: #111d30;
+        }
+        .location-card.active {
+            border-color: var(--gold);
+            box-shadow: 0 0 12px rgba(201, 169, 110, 0.2);
+            background: #121e32;
+        }
+        .location-card .name {
+            font-size: 1em;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .location-card .capacity {
+            font-size: 0.7em;
+            color: var(--text-dark);
+            letter-spacing: 0.5px;
+        }
+        .location-card .capacity.full {
+            color: var(--danger);
+        }
+        .location-card .icon {
+            font-size: 1.4em;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        /* 村口土路特殊样式 */
+        .location-card.special {
+            border-style: dashed;
+            border-color: #5a4a3a;
+        }
+
+        /* ── 右侧：聊天区域 ── */
+        #chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--chat-bg);
+            position: relative;
+        }
+        #chat-header {
+            background: var(--panel);
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #chat-header h3 {
+            font-weight: normal;
+            letter-spacing: 2px;
+            color: var(--gold);
+            font-size: 1em;
+        }
+        #chat-header .player-count {
+            font-size: 0.75em;
+            color: var(--text-dark);
+        }
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .message {
+            max-width: 75%;
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
+            position: relative;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .message .sender {
+            font-size: 0.7em;
+            color: var(--gold);
+            letter-spacing: 1px;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+        .message.own {
+            align-self: flex-end;
+            background: #1a3a5c;
+            border: 1px solid #2a5070;
+        }
+        .message.other {
+            align-self: flex-start;
+            background: #1a1a2e;
+            border: 1px solid var(--border);
+        }
+        .message.system {
+            align-self: center;
+            background: transparent;
+            border: none;
+            color: var(--text-dark);
+            font-style: italic;
+            font-size: 0.8em;
+            max-width: 90%;
+            text-align: center;
+        }
+        .message .report-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger);
+            border: 1px solid #6b2020;
+            color: #ffcccc;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 10px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .message.other:hover .report-btn {
+            display: flex;
+        }
+        .message.other .report-btn:hover {
+            background: #a03030;
+            transform: scale(1.15);
+        }
+
+        #input-area {
+            padding: 14px 20px;
+            background: var(--panel);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        #input-area select {
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+            font-family: inherit;
+            font-size: 0.85em;
+            border-radius: 3px;
+            min-width: 160px;
+        }
+        #input-area input {
+            flex: 1;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 10px 16px;
+            font-family: inherit;
+            font-size: 0.9em;
+            border-radius: 3px;
+        }
+        #input-area input::placeholder {
+            color: var(--text-dark);
+        }
+        #input-area button {
+            padding: 10px 20px;
+        }
+
+        /* ── 弹窗/面板 ── */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal {
+            background: var(--panel);
+            border: 1px solid var(--gold);
+            padding: 30px;
+            max-width: 550px;
+            width: 90%;
+            border-radius: 6px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        }
+        .modal h2 {
+            color: var(--gold);
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            font-weight: normal;
+            text-transform: uppercase;
+            font-size: 1.2em;
+        }
+        .modal label {
+            display: block;
+            color: var(--text-dark);
+            font-size: 0.8em;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+            margin-top: 14px;
+            text-transform: uppercase;
+        }
+        .modal input,
+        .modal textarea,
+        .modal select {
+            width: 100%;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            font-family: inherit;
+            font-size: 0.9em;
+            border-radius: 3px;
+            resize: vertical;
+        }
+        .modal textarea {
+            min-height: 80px;
+        }
+        .modal .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+
+        /* ── 墓碑区域 ── */
+        #graveyard {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--panel);
+            border: 1px solid #3a2a1a;
+            padding: 14px 18px;
+            border-radius: 6px;
+            z-index: 150;
+            max-width: 280px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+        #graveyard h4 {
+            color: #8b7d6b;
+            letter-spacing: 2px;
+            font-size: 0.75em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-weight: normal;
+        }
+        .tombstone {
+            font-size: 0.8em;
+            padding: 6px 0;
+            border-bottom: 1px solid #2a1a1a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tombstone .name {
+            color: #ccc;
+        }
+        .tombstone .timer {
+            color: var(--text-dark);
+            font-size: 0.75em;
+        }
+        .tombstone .revive-btn {
+            background: var(--success);
+            border: none;
+            color: #fff;
+            padding: 3px 10px;
+            cursor: pointer;
+            font-size: 0.7em;
+            border-radius: 3px;
+            letter-spacing: 0.5px;
+        }
+        .tombstone .revive-btn:disabled {
+            background: #2a3a2a;
+            cursor: not-allowed;
+            color: #666;
+        }
+
+        /* ── 引导员面板 ── */
+        #guide-panel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--panel);
+            border: 1px solid var(--gold);
+            padding: 16px;
+            border-radius: 6px;
+            z-index: 150;
+            max-width: 320px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+        #guide-panel h4 {
+            color: var(--gold);
+            letter-spacing: 2px;
+            font-size: 0.8em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-weight: normal;
+        }
+        .report-item {
+            background: var(--chat-bg);
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            border: 1px solid var(--border);
+        }
+        .report-item .btns {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        /* ── 响应式 ── */
+        @media (max-width: 768px) {
+            #main-container {
+                flex-direction: column;
+            }
+            #sidebar {
+                width: 100%;
+                max-height: 200px;
+                flex-shrink: 1;
+            }
+            #chat-area {
+                flex: 1;
+            }
+            #graveyard,
+            #guide-panel {
+                position: static;
+                margin: 10px;
+                max-width: none;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+        .text-gold {
+            color: var(--gold);
+        }
+        .text-danger {
+            color: #cc6666;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══════════ 顶部栏 ═══════════ -->
+    <div id="top-bar">
+        <div>
+            <h1>Liar's World</h1>
+            <div class="subtitle">The Village Where Only Liars Survive</div>
+        </div>
+        <div id="user-area">
+            <span id="current-role-display">👤 Not in character</span>
+            <button class="btn small" onclick="openCharacterCreate()" id="btn-create-char">+ New Character</button>
+            <button class="btn small danger" onclick="showGraveyard()" id="btn-graveyard">🪦 Graveyard</button>
+            <button class="btn small" onclick="openGuidePanel()" id="btn-guide" style="border-color:#c9a96e;">⚖️ Guide</button>
+        </div>
+    </div>
+
+    <!-- ═══════════ 主布局 ═══════════ -->
+    <div id="main-container">
+        <!-- 左侧场景列表 -->
+        <div id="sidebar">
+            <h2>📍 Village Locations</h2>
+            <div id="location-list"></div>
+            <div style="margin-top:20px; padding-top:14px; border-top:1px solid var(--border);">
+                <p style="font-size:0.7em;color:var(--text-dark);line-height:1.6;">
+                    <em>"Welcome to the Liar's World. You were invited because you said 'I'm bored' ten thousand times
+                        in the real world. Here, you must become someone else. A perfect someone else. One logical flaw,
+                        and you die. The Village Chief's house holds the ultimate meaning of life. Find it, and never be
+                        bored again. Only English is allowed. The Chief knows why — but he won't tell you easily."</em>
+                </p>
+            </div>
+        </div>
+
+        <!-- 右侧聊天区 -->
+        <div id="chat-area">
+            <div id="chat-header">
+                <h3 id="chat-title">Select a location to enter</h3>
+                <span class="player-count" id="player-count"></span>
+            </div>
+            <div id="messages">
+                <div class="message system">Welcome to <span class="text-gold">Liar's World</span>. Create a character to
+                    begin. Remember: <span class="text-danger">all identities must be lies, but logically
+                        flawless.</span> Only English is permitted.</div>
+            </div>
+            <div id="input-area">
+                <select id="speak-as">
+                    <option value="">-- Speak as... --</option>
+                </select>
+                <input type="text" id="chat-input" placeholder="Type in English only..." disabled>
+                <button class="btn" id="send-btn" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ 墓碑区（右下角浮动） ═══════════ -->
+    <div id="graveyard" class="hidden">
+        <h4>🪦 Village Graveyard</h4>
+        <div id="tombstone-list">
+            <p style="font-size:0.7em;color:var(--text-dark);">The graveyard is empty... for now.</p>
+        </div>
+    </div>
+
+    <!-- ═══════════ 引导员面板（左下角浮动） ═══════════ -->
+    <div id="guide-panel" class="hidden">
+        <h4>⚖️ Guide Panel — Reports</h4>
+        <div id="report-list">
+            <p style="font-size:0.7em;color:var(--text-dark);">No pending reports.</p>
+        </div>
+    </div>
+
+    <!-- ═══════════ 角色创建弹窗 ═══════════ -->
+    <div id="modal-character" class="modal-overlay hidden">
+        <div class="modal">
+            <h2>Create Your Lie</h2>
+            <p style="font-size:0.8em;color:var(--text-dark);margin-bottom:10px;">
+                You are entering the Liar's World. Your identity here must be <strong>completely different</strong> from
+                your real self — yet logically flawless. Any contradiction found by others = death.
+            </p>
+            <label for="char-name">Character Name (English)</label>
+            <input type="text" id="char-name" placeholder="e.g. Elias Thornwood">
+            <label for="char-identity">Identity / Role</label>
+            <input type="text" id="char-identity" placeholder="e.g. Wandering Merchant, Retired Sailor...">
+            <label for="char-job">Occupation</label>
+            <input type="text" id="char-job" placeholder="e.g. Blacksmith, Herbalist, Gambler...">
+            <label for="char-age">Age</label>
+            <input type="number" id="char-age" placeholder="e.g. 34" min="16" max="120">
+            <label for="char-reason">Reason for Coming to the Village</label>
+            <textarea id="char-reason" placeholder="e.g. I heard rumors about the Chief's secret and came to investigate..."></textarea>
+            <div class="btn-row">
+                <button class="btn" onclick="closeCharacterCreate()">Cancel</button>
+                <button class="btn" onclick="submitCharacter()" style="background:var(--highlight);">Enter the
+                    Village</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ 举报确认弹窗 ═══════════ -->
+    <div id="modal-report" class="modal-overlay hidden">
+        <div class="modal">
+            <h2>Report Logical Flaw</h2>
+            <p style="font-size:0.8em;color:var(--text-dark);">You are reporting a player for a logical contradiction in
+                their story. The Guide will review this.</p>
+            <label for="report-reason">What's the flaw?</label>
+            <textarea id="report-reason" placeholder="Explain the contradiction clearly..."></textarea>
+            <p id="report-target-display" style="font-size:0.8em;margin-top:8px;"></p>
+            <div class="btn-row">
+                <button class="btn" onclick="closeReportModal()">Cancel</button>
+                <button class="btn danger" onclick="submitReport()">Submit Report</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════
+        //  LIAR'S WORLD — 单机原型引擎
+        // ═══════════════════════════════════
+
+        // —— 数据存储（单机版用 localStorage） ——
+        const STORAGE_KEY = 'liars_world_data';
+
+        function loadData() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (raw) return JSON.parse(raw);
+            // 默认初始数据
+            return {
+                characters: [], // { id, name, identity, job, age, reason, alive, createdAt }
+                messages: {}, // { locationId: [ { id, charId, charName, text, time } ] }
+                reports: [], // { id, reportedCharId, reporterCharId, reason, locationId, messageId, status, createdAt }
+                graveyard: [], // { charId, charName, deathTime, reason }
+                nextId: 1,
+            };
+        }
+
+        function saveData(data) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        let DATA = loadData();
+
+        // —— 场景配置 ——
+        const LOCATIONS = [
+            { id: 'teahouse', name: 'Tea House', icon: '🍵', capacity: 8, desc: 'A quiet place for refined
+                conversation. The scent of jasmine lingers.' },
+            { id: 'tavern', name: 'Tavern', icon: '🍺', capacity: 8, desc: 'Loud, warm, and full of questionable
+                characters. The beer is terrible.' },
+            { id: 'restaurant', name: 'Restaurant', icon: '🍽️', capacity: 6, desc: 'The only decent food in the village.
+                The owner never shows his face.' },
+            { id: 'casino', name: 'Casino', icon: '🎲', capacity: 6, desc: 'Fortune changes hands quickly here. So do
+                identities.' },
+            { id: 'farm', name: 'Farm', icon: '🌾', capacity: 2, desc: 'Two people, open fields, nowhere to hide a lie.' },
+            { id: 'dirtroad', name: 'Dirt Road to Wilderness', icon: '🛤️', capacity: 1,
+                desc: 'A lonely path. Only one may walk it at a time. Perfect for thinking — or escaping.' },
+            { id: 'chiefhouse', name: "Village Chief's House", icon: '🏛️', capacity: 3,
+            desc: 'The Chief knows why only English is spoken here. He keeps the ultimate secret.' },
+        ];
+
+        // —— 当前状态 ——
+        let currentLocation = null;
+        let currentCharacterId = null; // 当前选中的"发言身份"
+        let pendingReportTarget = null;
+
+        // —— 初始化 ——
+        function init() {
+            renderLocations();
+            updateSpeakAsList();
+            updateGraveyard();
+            updateGuidePanel();
+            // 定时检查墓碑复活
+            setInterval(checkGraveyardTimers, 1000);
+            // 从存储恢复
+            if (DATA.characters.length > 0) {
+                const aliveChars = DATA.characters.filter(c => c.alive);
+                if (aliveChars.length > 0) {
+                    currentCharacterId = aliveChars[0].id;
+                    updateCurrentRoleDisplay();
+                }
+            }
+            updateChatInputState();
+        }
+
+        // —— 渲染场景列表 ——
+        function renderLocations() {
+            const container = document.getElementById('location-list');
+            container.innerHTML = LOCATIONS.map(loc => {
+                const count = getPlayerCountInLocation(loc.id);
+                const isFull = count >= loc.capacity;
+                const activeClass = currentLocation === loc.id ? ' active' : '';
+                const specialClass = loc.id === 'dirtroad' ? ' special' : '';
+                return `
+                    <div class="location-card${activeClass}${specialClass}" onclick="enterLocation('${loc.id}')" id="loc-${loc.id}">
+                        <span class="icon">${loc.icon}</span>
+                        <span class="name">${loc.name}</span>
+                        <span class="capacity${isFull ? ' full' : ''}">${count}/${loc.capacity} players</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getPlayerCountInLocation(locId) {
+            // 单机版：统计所有存活的角色（简化，实际多人版需追踪位置）
+            // 这里我们模拟：当前角色在某个位置就算1人
+            if (!currentLocation) return 0;
+            if (currentLocation === locId && currentCharacterId) return 1;
+            return 0;
+        }
+
+        // —— 进入场景 ——
+        function enterLocation(locId) {
+            const loc = LOCATIONS.find(l => l.id === locId);
+            if (!loc) return;
+
+            // 检查容量（单机简化：自己进去就算）
+            // 在多人版中这里需要真正检查
+            currentLocation = locId;
+            document.getElementById('chat-title').textContent = `${loc.icon} ${loc.name}`;
+            document.getElementById('player-count').textContent = loc.desc;
+            renderLocations();
+            renderMessages();
+            updateChatInputState();
+            // 滚动到底部
+            scrollChatBottom();
+        }
+
+        // —— 渲染消息 ——
+        function renderMessages() {
+            const container = document.getElementById('messages');
+            if (!currentLocation) {
+                container.innerHTML =
+                    '<div class="message system">Select a location to enter. The village awaits your lies.</div>';
+                return;
+            }
+            const msgs = DATA.messages[currentLocation] || [];
+            if (msgs.length === 0) {
+                container.innerHTML =
+                    '<div class="message system">No one has spoken here yet. Break the silence — in English.</div>';
+            } else {
+                container.innerHTML = msgs.map(m => {
+                    if (m.type === 'system') {
+                        return `<div class="message system">${escapeHtml(m.text)}</div>`;
+                    }
+                    const isOwn = m.charId === currentCharacterId;
+                    const cls = isOwn ? 'own' : 'other';
+                    const reportBtn = (!isOwn && m.charId) ?
+                        `<button class="report-btn" title="Report logical flaw" onclick="event.stopPropagation(); openReportModal('${m.charId}', '${m.id}')">!</button>` :
+                        '';
+                    return `
+                        <div class="message ${cls}">
+                            <div class="sender">${escapeHtml(m.charName || 'Unknown')}</div>
+                            <div>${escapeHtml(m.text)}</div>
+                            ${reportBtn}
+                        </div>
+                    `;
+                }).join('');
+            }
+            scrollChatBottom();
+        }
+
+        function scrollChatBottom() {
+            const container = document.getElementById('messages');
+            setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+        }
+
+        // —— 发送消息 ——
+        function sendMessage() {
+            if (!currentLocation || !currentCharacterId) return;
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            // 检查是否英文（简单检测：不含中文字符）
+            if (/[\u4e00-\u9fff]/.test(text)) {
+                alert('⚠️ Only English is allowed in the Liar\'s World. The Chief insists.');
+                return;
+            }
+            const char = DATA.characters.find(c => c.id === currentCharacterId);
+            if (!char || !char.alive) {
+                alert('Your character is dead. Visit the graveyard.');
+                return;
+            }
+            const msgId = 'msg_' + DATA.nextId++;
+            const msg = {
+                id: msgId,
+                type: 'chat',
+                charId: currentCharacterId,
+                charName: char.name,
+                text: text,
+                time: Date.now(),
+            };
+            if (!DATA.messages[currentLocation]) DATA.messages[currentLocation] = [];
+            DATA.messages[currentLocation].push(msg);
+            saveData(DATA);
+            input.value = '';
+            renderMessages();
+            scrollChatBottom();
+        }
+
+        // —— 创建角色 ——
+        function openCharacterCreate() {
+            document.getElementById('modal-character').classList.remove('hidden');
+            document.getElementById('char-name').value = '';
+            document.getElementById('char-identity').value = '';
+            document.getElementById('char-job').value = '';
+            document.getElementById('char-age').value = '';
+            document.getElementById('char-reason').value = '';
+        }
+
+        function closeCharacterCreate() {
+            document.getElementById('modal-character').classList.add('hidden');
+        }
+
+        function submitCharacter() {
+            const name = document.getElementById('char-name').value.trim();
+            const identity = document.getElementById('char-identity').value.trim();
+            const job = document.getElementById('char-job').value.trim();
+            const age = parseInt(document.getElementById('char-age').value);
+            const reason = document.getElementById('char-reason').value.trim();
+
+            if (!name || !identity || !job || !age || !reason) {
+                alert('All fields are required. Your lie must be complete.');
+                return;
+            }
+            if (age < 16 || age > 120) {
+                alert('Age must be between 16 and 120.');
+                return;
+            }
+            // 检查是否英文
+            const allText = name + identity + job + reason;
+            if (/[\u4e00-\u9fff]/.test(allText)) {
+                alert('⚠️ All character details must be in English.');
+                return;
+            }
+
+            const char = {
+                id: 'char_' + DATA.nextId++,
+                name,
+                identity,
+                job,
+                age,
+                reason,
+                alive: true,
+                createdAt: Date.now(),
+            };
+            DATA.characters.push(char);
+            currentCharacterId = char.id;
+            saveData(DATA);
+            closeCharacterCreate();
+            updateSpeakAsList();
+            updateCurrentRoleDisplay();
+            updateChatInputState();
+            // 添加系统消息
+            addSystemMessage(`🆕 ${name} has entered the Liar's World. Identity: ${identity}. Occupation: ${job}. Age: ${age}.`);
+            renderLocations();
+        }
+
+        // —— 举报系统 ——
+        function openReportModal(targetCharId, messageId) {
+            pendingReportTarget = { charId: targetCharId, messageId };
+            const target = DATA.characters.find(c => c.id === targetCharId);
+            document.getElementById('report-target-display').textContent =
+                `Reporting: ${target ? target.name : 'Unknown'} — for logical contradiction`;
+            document.getElementById('report-reason').value = '';
+            document.getElementById('modal-report').classList.remove('hidden');
+        }
+
+        function closeReportModal() {
+            document.getElementById('modal-report').classList.add('hidden');
+            pendingReportTarget = null;
+        }
+
+        function submitReport() {
+            if (!pendingReportTarget) return;
+            const reason = document.getElementById('report-reason').value.trim();
+            if (!reason) {
+                alert('Please explain the logical flaw.');
+                return;
+            }
+            const report = {
+                id: 'report_' + DATA.nextId++,
+                reportedCharId: pendingReportTarget.charId,
+                reporterCharId: currentCharacterId,
+                reason,
+                locationId: currentLocation,
+                messageId: pendingReportTarget.messageId,
+                status: 'pending', // pending, approved, rejected
+                createdAt: Date.now(),
+            };
+            DATA.reports.push(report);
+            saveData(DATA);
+            closeReportModal();
+            updateGuidePanel();
+            addSystemMessage(`⚠️ A report has been filed. The Guide will review it.`);
+        }
+
+        // —— 引导员：处理举报 ——
+        function handleReport(reportId, action) {
+            const report = DATA.reports.find(r => r.id === reportId);
+            if (!report || report.status !== 'pending') return;
+
+            if (action === 'approve') {
+                // 处死角色
+                report.status = 'approved';
+                const char = DATA.characters.find(c => c.id === report.reportedCharId);
+                if (char && char.alive) {
+                    char.alive = false;
+                    DATA.graveyard.push({
+                        charId: char.id,
+                        charName: char.name,
+                        deathTime: Date.now(),
+                        reason: report.reason,
+                    });
+                    addSystemMessage(`💀 ${char.name} has been EXECUTED for logical contradiction: "${report.reason}"`);
+                    if (currentCharacterId === char.id) {
+                        currentCharacterId = null;
+                        updateCurrentRoleDisplay();
+                        updateChatInputState();
+                    }
+                }
+            } else if (action === 'reject') {
+                report.status = 'rejected';
+                addSystemMessage(`✅ A report against a player was REJECTED by the Guide. They live... for now.`);
+            }
+            saveData(DATA);
+            updateGuidePanel();
+            updateGraveyard();
+            updateSpeakAsList();
+            renderLocations();
+            renderMessages();
+        }
+
+        // —— 墓碑系统 ——
+        function checkGraveyardTimers() {
+            let changed = false;
+            const now = Date.now();
+            DATA.graveyard.forEach(g => {
+                if (!g.revivable && (now - g.deathTime) > 10 * 60 * 1000) { // 10分钟
+                    g.revivable = true;
+                    changed = true;
+                }
+            });
+            if (changed) {
+                saveData(DATA);
+                updateGraveyard();
+            }
+        }
+
+        function reviveCharacter(charId) {
+            const grave = DATA.graveyard.find(g => g.charId === charId);
+            if (!grave || !grave.revivable) return;
+            const char = DATA.characters.find(c => c.id === charId);
+            if (!char) return;
+            // 移除墓碑
+            DATA.graveyard = DATA.graveyard.filter(g => g.charId !== charId);
+            // 复活角色但清除旧身份（强制重新创建）
+            // 实际上我们让玩家重新创建角色，旧角色从characters中移除
+            DATA.characters = DATA.characters.filter(c => c.id !== charId);
+            saveData(DATA);
+            updateGraveyard();
+            updateSpeakAsList();
+            addSystemMessage(`🌱 A tombstone has grown grass. ${grave.charName}'s soul may return in a new form.`);
+            openCharacterCreate();
+        }
+
+        function updateGraveyard() {
+            const container = document.getElementById('tombstone-list');
+            if (DATA.graveyard.length === 0) {
+                container.innerHTML = '<p style="font-size:0.7em;color:var(--text-dark);">The graveyard is empty... for now.</p>';
+            } else {
+                container.innerHTML = DATA.graveyard.map(g => {
+                    const elapsed = Math.floor((Date.now() - g.deathTime) / 1000);
+                    const remaining = Math.max(0, 600 - elapsed);
+                    const mins = Math.floor(remaining / 60);
+                    const secs = remaining % 60;
+                    const timerStr = remaining <= 0 ?
+                        '🌱 Grass has grown' :
+                        `⏳ ${mins}:${secs.toString().padStart(2, '0')}`;
+                    const canRevive = remaining <= 0;
+                    return `
+                        <div class="tombstone">
+                            <span class="name">🪦 ${escapeHtml(g.charName)}</span>
+                            <span class="timer">${timerStr}</span>
+                            ${canRevive ? `<button class="revive-btn" onclick="reviveCharacter('${g.charId}')">Return</button>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+            document.getElementById('btn-graveyard').textContent = `🪦 Graveyard (${DATA.graveyard.length})`;
+        }
+
+        function showGraveyard() {
+            const el = document.getElementById('graveyard');
+            el.classList.toggle('hidden');
+            updateGraveyard();
+        }
+
+        // —— 引导员面板 ——
+        function updateGuidePanel() {
+            const container = document.getElementById('report-list');
+            const pending = DATA.reports.filter(r => r.status === 'pending');
+            if (pending.length === 0) {
+                container.innerHTML =
+                '<p style="font-size:0.7em;color:var(--text-dark);">No pending reports. The village is... peaceful.</p>';
+            } else {
+                container.innerHTML = pending.map(r => {
+                    const reported = DATA.characters.find(c => c.id === r.reportedCharId);
+                    const reporter = DATA.characters.find(c => c.id === r.reporterCharId);
+                    return `
+                        <div class="report-item">
+                            <div><strong>Target:</strong> ${reported ? reported.name : 'Unknown'}</div>
+                            <div><strong>Reported by:</strong> ${reporter ? reporter.name : 'Unknown'}</div>
+                            <div><strong>Flaw:</strong> "${escapeHtml(r.reason)}"</div>
+                            <div class="btns">
+                                <button class="btn small danger" onclick="handleReport('${r.id}', 'approve')">💀 Execute</button>
+                                <button class="btn small" onclick="handleReport('${r.id}', 'reject')">✅ Dismiss</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            const pendingCount = DATA.reports.filter(r => r.status === 'pending').length;
+            document.getElementById('btn-guide').textContent = `⚖️ Guide (${pendingCount})`;
+        }
+
+        function openGuidePanel() {
+            const el = document.getElementById('guide-panel');
+            el.classList.toggle('hidden');
+            updateGuidePanel();
+        }
+
+        // —— 辅助 ——
+        function updateSpeakAsList() {
+            const select = document.getElementById('speak-as');
+            const alive = DATA.characters.filter(c => c.alive);
+            select.innerHTML = '<option value="">-- Speak as... --</option>' +
+                alive.map(c => `<option value="${c.id}" ${c.id === currentCharacterId ? 'selected' : ''}>${escapeHtml(c.name)} (${escapeHtml(c.identity)})</option>`)
+                .join('');
+            select.onchange = function() {
+                currentCharacterId = this.value || null;
+                updateCurrentRoleDisplay();
+                updateChatInputState();
+                renderMessages();
+            };
+        }
+
+        function updateCurrentRoleDisplay() {
+            const display = document.getElementById('current-role-display');
+            if (currentCharacterId) {
+                const char = DATA.characters.find(c => c.id === currentCharacterId);
+                if (char && char.alive) {
+                    display.textContent = `👤 ${char.name} — ${char.identity}`;
+                    display.style.color = '#c9a96e';
+                } else {
+                    display.textContent = '💀 Dead — visit graveyard';
+                    display.style.color = '#cc6666';
+                }
+            } else {
+                display.textContent = '👤 Not in character';
+                display.style.color = '#8b7d6b';
+            }
+        }
+
+        function updateChatInputState() {
+            const input = document.getElementById('chat-input');
+            const btn = document.getElementById('send-btn');
+            if (currentCharacterId && currentLocation) {
+                const char = DATA.characters.find(c => c.id === currentCharacterId);
+                if (char && char.alive) {
+                    input.disabled = false;
+                    btn.disabled = false;
+                    input.placeholder = 'Type in English only...';
+                    return;
+                }
+            }
+            input.disabled = true;
+            btn.disabled = true;
+            input.placeholder = 'Create a character and enter a location to speak...';
+        }
+
+        function addSystemMessage(text) {
+            if (!currentLocation) return;
+            if (!DATA.messages[currentLocation]) DATA.messages[currentLocation] = [];
+            DATA.messages[currentLocation].push({
+                id: 'sys_' + DATA.nextId++,
+                type: 'system',
+                text,
+                time: Date.now(),
+            });
+            saveData(DATA);
+            renderMessages();
+            scrollChatBottom();
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // —— 事件绑定 ——
+        document.getElementById('send-btn').addEventListener('click', sendMessage);
+        document.getElementById('chat-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // —— 启动 ——
+        init();
+        console.log('🌍 Liar\'s World initialized.');
+        console.log('📋 Characters:', DATA.characters.length);
+        console.log('🪦 Graveyard:', DATA.graveyard.length);
+        console.log('⚖️ Pending reports:', DATA.reports.filter(r => r.status === 'pending').length);
+    </script>
+</body>
+</html>
