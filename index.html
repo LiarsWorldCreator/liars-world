@@ -667,638 +667,701 @@
     </div>
 
     <script>
-      (function() {
-    const SUPABASE_URL = 'https://jhxvmwdrqwfakeaptbdt.supabase.co';
-    const SUPABASE_ANON_KEY =
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeHZtd2RycXdmYWtlYXB0YmR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNzk0MzYsImV4cCI6MjA5NDc1NTQzNn0.NJ0zwaGze_YoKCG9etfsVk8ERZiVMkO-M0sMQpWhnRE';
-    const ADMIN_PASSWORD = '19701974Wo.';
+        (function() {
+            const SUPABASE_URL = 'https://jhxvmwdrqwfakeaptbdt.supabase.co';
+            const SUPABASE_ANON_KEY =
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeHZtd2RycXdmYWtlYXB0YmR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNzk0MzYsImV4cCI6MjA5NDc1NTQzNn0.NJ0zwaGze_YoKCG9etfsVk8ERZiVMkO-M0sMQpWhnRE';
+            const ADMIN_PASSWORD = 'liar2024'; // ⚠️ 改成你自己的密码
 
-    const { createClient } = supabase;
-    const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            const { createClient } = supabase;
+            const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const LOCATIONS = [
-        { id: 'teahouse', name: 'Tea House', icon: '🍵', capacity: 8, rules: 'Speak softly. No raised voices.' },
-        { id: 'tavern', name: 'Tavern', icon: '🍺', capacity: 8, rules: 'Loud and rowdy. Exaggeration encouraged.' },
-        { id: 'restaurant', name: 'Restaurant', icon: '🍽️', capacity: 6, rules: 'Discuss food, travel, and the outside world.' },
-        { id: 'casino', name: 'Casino', icon: '🎲', capacity: 6, rules: 'Every statement is a gamble. Bluff.' },
-        { id: 'farm', name: 'Farm', icon: '🌾', capacity: 2, rules: 'Only two. No secrets here.' },
-        { id: 'dirtroad', name: 'Dirt Road', icon: '🛤️', capacity: 1, rules: 'Solitude. Perfect for thinking — or escaping.' },
-        { id: 'chiefhouse', name: "Chief's House", icon: '🏛️', capacity: 3, rules: 'Only discussions about the meaning of life. The Chief is watching.' },
-    ];
+            const LOCATIONS = [
+                { id: 'teahouse', name: 'Tea House', icon: '🍵', capacity: 8,
+                    rules: 'Speak softly. No raised voices.' },
+                { id: 'tavern', name: 'Tavern', icon: '🍺', capacity: 8,
+                    rules: 'Loud and rowdy. Exaggeration encouraged.' },
+                { id: 'restaurant', name: 'Restaurant', icon: '🍽️', capacity: 6,
+                    rules: 'Discuss food, travel, and the outside world.' },
+                { id: 'casino', name: 'Casino', icon: '🎲', capacity: 6, rules: 'Every statement is a gamble. Bluff.' },
+                { id: 'farm', name: 'Farm', icon: '🌾', capacity: 2, rules: 'Only two. No secrets here.' },
+                { id: 'dirtroad', name: 'Dirt Road', icon: '🛤️', capacity: 1,
+                rules: 'Solitude. Perfect for thinking — or escaping.' },
+                { id: 'chiefhouse', name: "Chief's House", icon: '🏛️', capacity: 3,
+                    rules: 'Only discussions about the meaning of life. The Chief is watching.' },
+            ];
 
-    let currentLocation = null;
-    let currentCharacterId = null;
-    let currentCharacters = [];
-    let isAdmin = false;
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let isRecording = false;
-    let recordingStartTime = 0;
-    let recordingTimer = null;
-    let currentAudio = null;
-    let currentAudioMsg = null;
-    let isSendingVoice = false; // 防止重复发送
+            let currentLocation = null;
+            let currentCharacterId = null;
+            let currentCharacters = [];
+            let isAdmin = false;
+            let mediaRecorder = null;
+            let audioChunks = [];
+            let isRecording = false;
+            let recordingStartTime = 0;
+            let recordingTimer = null;
+            let currentAudio = null;
+            let currentAudioMsg = null;
 
-    const $ = (id) => document.getElementById(id);
+            const $ = (id) => document.getElementById(id);
 
-    function esc(str) {
-        const d = document.createElement('div');
-        d.textContent = str || '';
-        return d.innerHTML;
-    }
-
-    function formatDuration(s) {
-        const m = Math.floor(s / 60);
-        const sec = Math.floor(s % 60);
-        return m + ':' + sec.toString().padStart(2, '0');
-    }
-
-    function getAvatarUrl(seed) {
-        return `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${encodeURIComponent(seed)}&backgroundColor=333333,555555,777777`;
-    }
-
-    function showBanner(msg, type) {
-        const b = document.createElement('div');
-        b.className = 'feedback-banner';
-        b.style.borderColor = type === 'danger' ? 'var(--danger)' : 'var(--gold)';
-        b.textContent = msg;
-        document.body.appendChild(b);
-        setTimeout(function() { b.remove(); }, 3500);
-    }
-
-    // === 数据加载 ===
-    async function loadCharacters() {
-        var res = await db.from('characters').select('*').eq('alive', true);
-        if (res.data) currentCharacters = res.data;
-    }
-
-    async function loadDailyTask() {
-        var res = await db.from('daily_tasks').select('*').eq('active', true).order('created_at', { ascending: false }).limit(1);
-        if (res.data && res.data.length > 0) {
-            var d = res.data[0];
-            var locName = d.location_id === 'all' ? 'All Locations' : (LOCATIONS.find(function(l) { return l.id === d.location_id; }) || {}).name || d.location_id;
-            $('daily-task-text').textContent = '[' + locName + '] ' + d.task_text;
-        } else {
-            $('daily-task-text').textContent = 'No task today. Explore freely.';
-        }
-    }
-
-    // === 在线状态 ===
-    async function updateOnlineStatus() {
-        if (!currentCharacterId) return;
-        var char = currentCharacters.find(function(c) { return c.id === currentCharacterId; });
-        if (!char) return;
-        var existing = await db.from('online_players').select('*').eq('char_id', currentCharacterId);
-        if (existing.data && existing.data.length > 0) {
-            await db.from('online_players').update({ location_id: currentLocation, last_seen: new Date() }).eq('char_id', currentCharacterId);
-        } else {
-            await db.from('online_players').insert({ char_id: currentCharacterId, char_name: char.name, avatar_url: char.avatar_url, location_id: currentLocation, last_seen: new Date() });
-        }
-        loadOnlinePlayers();
-    }
-
-    async function loadOnlinePlayers() {
-        var res = await db.from('online_players').select('*').order('last_seen', { ascending: false });
-        var players = res.data || [];
-        $('online-count').textContent = players.length;
-        $('online-list').innerHTML = players.map(function(p) {
-            var loc = LOCATIONS.find(function(l) { return l.id === p.location_id; });
-            return '<div class="online-player"><img src="' + (p.avatar_url || getAvatarUrl(p.char_name)) + '" onerror="this.src=\'' + getAvatarUrl('fallback') + '\'"><span>' + esc(p.char_name) + '</span><span class="loc">@ ' + (loc ? loc.icon : '?') + ' ' + (loc ? loc.name : 'Unknown') + '</span></div>';
-        }).join('');
-    }
-
-    async function cleanupOnlinePlayers() {
-        var cutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-        await db.from('online_players').delete().lt('last_seen', cutoff);
-    }
-
-    setInterval(cleanupOnlinePlayers, 60000);
-    setInterval(function() { if (currentCharacterId) updateOnlineStatus(); }, 30000);
-
-    // === 渲染 ===
-    function renderLocations() {
-        $('location-list').innerHTML = LOCATIONS.map(function(loc) {
-            var count = (currentLocation === loc.id && currentCharacterId) ? 1 : 0;
-            var isFull = count >= loc.capacity;
-            return '<div class="location-card' + (currentLocation === loc.id ? ' active' : '') + '" data-loc="' + loc.id + '"><div>' + loc.icon + ' <strong>' + loc.name + '</strong></div><div class="capacity' + (isFull ? ' full' : '') + '">' + count + '/' + loc.capacity + '</div><div class="rules">' + loc.rules + '</div></div>';
-        }).join('');
-    }
-
-    function enterLocation(locId) {
-        currentLocation = locId;
-        var loc = LOCATIONS.find(function(l) { return l.id === locId; });
-        $('chat-title').textContent = loc.icon + ' ' + loc.name;
-        $('scene-rules').textContent = loc.rules;
-        renderLocations();
-        loadMessages();
-        updateUI();
-        updateOnlineStatus();
-    }
-
-    async function loadMessages() {
-        if (!currentLocation) return;
-        var res = await db.from('messages').select('*').eq('location_id', currentLocation).order('created_at', { ascending: true }).limit(50);
-        renderMessages(res.data || []);
-    }
-
-    function renderMessages(msgs) {
-        if (!msgs.length) { $('messages').innerHTML = '<div class="message system">Silence. Speak in English.</div>'; return; }
-        $('messages').innerHTML = msgs.map(function(m) {
-            if (m.type === 'system') return '<div class="message system">' + esc(m.text) + '</div>';
-            var isOwn = m.char_id === currentCharacterId;
-            var char = currentCharacters.find(function(c) { return c.id === m.char_id; });
-            var avatar = char ? (char.avatar_url || getAvatarUrl(char.name)) : getAvatarUrl(m.char_name || 'unknown');
-            var content;
-            if (m.audio_url) {
-                var dur = m.duration || 0;
-                content = '<div class="voice-msg" data-audio="' + m.audio_url + '" data-duration="' + dur + '" data-msgid="' + m.id + '"><span class="play-icon">▶</span><span class="duration">' + formatDuration(dur) + '</span><div class="progress-bar"><div class="progress-fill"></div></div></div>';
-            } else {
-                content = '<div>' + esc(m.text) + '</div>';
+            function esc(str) {
+                const d = document.createElement('div');
+                d.textContent = str || '';
+                return d.innerHTML;
             }
-            return '<div class="message ' + (isOwn ? 'own' : 'other') + '"><div class="sender"><img src="' + avatar + '" onerror="this.src=\'' + getAvatarUrl('fallback') + '\'"> ' + esc(m.char_name || 'Ghost') + '</div>' + content + (isOwn ? '' : '<button class="report-btn" data-char="' + m.char_id + '" data-msg="' + m.id + '">!</button>') + '</div>';
-        }).join('');
-        $('messages').scrollTop = $('messages').scrollHeight;
-    }
 
-    function addMessageToChat(m) {
-        if (m.type === 'system') {
-            $('messages').insertAdjacentHTML('beforeend', '<div class="message system">' + esc(m.text) + '</div>');
-        } else {
-            var isOwn = m.char_id === currentCharacterId;
-            var char = currentCharacters.find(function(c) { return c.id === m.char_id; });
-            var avatar = char ? (char.avatar_url || getAvatarUrl(char.name)) : getAvatarUrl(m.char_name || 'unknown');
-            var content;
-            if (m.audio_url) {
-                var dur = m.duration || 0;
-                content = '<div class="voice-msg" data-audio="' + m.audio_url + '" data-duration="' + dur + '" data-msgid="' + m.id + '"><span class="play-icon">▶</span><span class="duration">' + formatDuration(dur) + '</span><div class="progress-bar"><div class="progress-fill"></div></div></div>';
-            } else {
-                content = '<div>' + esc(m.text) + '</div>';
+            function formatDuration(s) {
+                const m = Math.floor(s / 60);
+                const sec = Math.floor(s % 60);
+                return m + ':' + sec.toString().padStart(2, '0');
             }
-            $('messages').insertAdjacentHTML('beforeend', '<div class="message ' + (isOwn ? 'own' : 'other') + '"><div class="sender"><img src="' + avatar + '" onerror="this.src=\'' + getAvatarUrl('fallback') + '\'"> ' + esc(m.char_name || 'Ghost') + '</div>' + content + (isOwn ? '' : '<button class="report-btn" data-char="' + m.char_id + '" data-msg="' + m.id + '">!</button>') + '</div>');
-        }
-        $('messages').scrollTop = $('messages').scrollHeight;
-    }
 
-    function subscribeAll() {
-        db.channel('public:messages').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, function(payload) {
-            if (payload.new.location_id === currentLocation && payload.new.type !== 'system') {
-                addMessageToChat(payload.new);
+            function getAvatarUrl(seed) {
+                return `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${encodeURIComponent(seed)}&backgroundColor=333333,555555,777777`;
             }
-        }).subscribe();
-        db.channel('public:reports').on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, updateGuidePanel).subscribe();
-        db.channel('public:graveyard').on('postgres_changes', { event: '*', schema: 'public', table: 'graveyard' }, updateGraveyard).subscribe();
-        db.channel('public:online').on('postgres_changes', { event: '*', schema: 'public', table: 'online_players' }, loadOnlinePlayers).subscribe();
-        db.channel('public:daily').on('postgres_changes', { event: '*', schema: 'public', table: 'daily_tasks' }, loadDailyTask).subscribe();
-    }
 
-    // === 发送文字 ===
-    async function sendMessage() {
-        if (!currentLocation || !currentCharacterId) return;
-        var text = $('chat-input').value.trim();
-        if (!text) return;
-        if (/[\u4e00-\u9fff]/.test(text)) { alert('English only!'); return; }
-        var char = currentCharacters.find(function(c) { return c.id === currentCharacterId; });
-        await db.from('messages').insert({ location_id: currentLocation, char_id: currentCharacterId, char_name: char.name, text: text, type: 'chat' });
-        $('chat-input').value = '';
-    }
+            function showBanner(msg, type = 'info') {
+                const b = document.createElement('div');
+                b.className = 'feedback-banner';
+                b.style.borderColor = type === 'danger' ? 'var(--danger)' : 'var(--gold)';
+                b.textContent = msg;
+                document.body.appendChild(b);
+                setTimeout(() => b.remove(), 3500);
+            }
 
-    // === 语音录制（修复版）===
-    async function startRecording() {
-        if (!currentLocation || !currentCharacterId) { alert('Enter a location first.'); return; }
-        if (isRecording) return;
-        if (isSendingVoice) return; // 正在发送中，不允许再次录音
-        try {
-            var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
-            audioChunks = [];
-            recordingStartTime = Date.now();
-            isSendingVoice = false;
+            // === 数据加载 ===
+            async function loadCharacters() {
+                const { data } = await db.from('characters').select('*').eq('alive', true);
+                if (data) currentCharacters = data;
+            }
 
-            mediaRecorder.ondataavailable = function(e) {
-                if (e.data.size > 0) audioChunks.push(e.data);
-            };
-
-            mediaRecorder.onstop = async function() {
-                stream.getTracks().forEach(function(t) { t.stop(); });
-                clearInterval(recordingTimer);
-                var duration = (Date.now() - recordingStartTime) / 1000;
-                $('cancel-voice-btn').style.display = 'none';
-                $('recording-status').style.display = 'none';
-
-                // 如果被取消（audioChunks为空），直接重置
-                if (audioChunks.length === 0 || isSendingVoice === false) {
-                    // 检查是不是真的要发送
-                    if (audioChunks.length === 0) {
-                        resetVoiceBtn();
-                        return;
-                    }
+            async function loadDailyTask() {
+                const { data } = await db.from('daily_tasks').select('*').eq('active', true).order('created_at', {
+                    ascending: false }).limit(1);
+                if (data && data.length > 0) {
+                    const locName = data[0].location_id === 'all' ? 'All Locations' : (LOCATIONS.find(l => l.id ===
+                        data[0].location_id)?.name || data[0].location_id);
+                    $('daily-task-text').textContent = `[${locName}] ${data[0].task_text}`;
+                } else {
+                    $('daily-task-text').textContent = 'No task today. Explore freely.';
                 }
+            }
 
-                // 防止重复发送
-                if (isSendingVoice) return;
-                isSendingVoice = true;
+            // === 在线状态 ===
+            async function updateOnlineStatus() {
+                if (!currentCharacterId) return;
+                const char = currentCharacters.find(c => c.id === currentCharacterId);
+                if (!char) return;
+                const { data: existing } = await db.from('online_players').select('*').eq('char_id',
+                    currentCharacterId);
+                if (existing && existing.length > 0) {
+                    await db.from('online_players').update({ location_id: currentLocation, last_seen: new Date() }).eq(
+                        'char_id', currentCharacterId);
+                } else {
+                    await db.from('online_players').insert({
+                        char_id: currentCharacterId,
+                        char_name: char.name,
+                        avatar_url: char.avatar_url,
+                        location_id: currentLocation,
+                        last_seen: new Date()
+                    });
+                }
+                loadOnlinePlayers();
+            }
 
-                var blob = new Blob(audioChunks, { type: 'audio/webm' });
-                var char = currentCharacters.find(function(c) { return c.id === currentCharacterId; });
-                var path = 'voice_' + Date.now() + '.webm';
+            async function loadOnlinePlayers() {
+                const { data } = await db.from('online_players').select('*').order('last_seen', { ascending: false });
+                const players = data || [];
+                $('online-count').textContent = players.length;
+                $('online-list').innerHTML = players.map(p => {
+                    const loc = LOCATIONS.find(l => l.id === p.location_id);
+                    return `<div class="online-player">
+                <img src="${p.avatar_url || getAvatarUrl(p.char_name)}" onerror="this.src='${getAvatarUrl('fallback')}'">
+                <span>${esc(p.char_name)}</span>
+                <span class="loc">@ ${loc ? loc.icon : '?'} ${loc ? loc.name : 'Unknown'}</span>
+              </div>`;
+                }).join('');
+            }
 
-                var uploadRes = await db.storage.from('voice_messages').upload(path, blob, { contentType: 'audio/webm', cacheControl: '3600' });
-                if (uploadRes.error) {
-                    alert('Upload failed. Please try again.');
-                    resetVoiceBtn();
-                    isSendingVoice = false;
+            // 定期清理离线玩家（超过2分钟未更新）
+            async function cleanupOnlinePlayers() {
+                const cutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+                await db.from('online_players').delete().lt('last_seen', cutoff);
+            }
+
+            setInterval(cleanupOnlinePlayers, 60000);
+            if (currentCharacterId) setInterval(updateOnlineStatus, 30000);
+
+            // === 渲染 ===
+            function renderLocations() {
+                $('location-list').innerHTML = LOCATIONS.map(loc => {
+                    const count = (currentLocation === loc.id && currentCharacterId) ? 1 : 0;
+                    const isFull = count >= loc.capacity;
+                    return `<div class="location-card${currentLocation===loc.id?' active':''}" data-loc="${loc.id}">
+                <div>${loc.icon} <strong>${loc.name}</strong></div>
+                <div class="capacity${isFull?' full':''}">${count}/${loc.capacity}</div>
+                <div class="rules">${loc.rules}</div>
+              </div>`;
+                }).join('');
+            }
+
+            function enterLocation(locId) {
+                currentLocation = locId;
+                const loc = LOCATIONS.find(l => l.id === locId);
+                $('chat-title').textContent = `${loc.icon} ${loc.name}`;
+                $('scene-rules').textContent = loc.rules;
+                renderLocations();
+                loadMessages();
+                updateUI();
+                updateOnlineStatus();
+            }
+
+            async function loadMessages() {
+                if (!currentLocation) return;
+                const { data } = await db.from('messages').select('*').eq('location_id', currentLocation).order(
+                    'created_at', { ascending: true }).limit(50);
+                renderMessages(data || []);
+            }
+
+            function renderMessages(msgs) {
+                if (!msgs.length) {
+                    $('messages').innerHTML = '<div class="message system">Silence. Speak in English.</div>';
                     return;
                 }
+                $('messages').innerHTML = msgs.map(m => {
+                    if (m.type === 'system') return `<div class="message system">${esc(m.text)}</div>`;
+                    const isOwn = m.char_id === currentCharacterId;
+                    const char = currentCharacters.find(c => c.id === m.char_id);
+                    const avatar = char?.avatar_url || getAvatarUrl(m.char_name || 'unknown');
+                    let content;
+                    if (m.audio_url) {
+                        const dur = m.duration || 0;
+                        content = `<div class="voice-msg" data-audio="${m.audio_url}" data-duration="${dur}" data-msgid="${m.id}">
+                  <span class="play-icon">▶</span>
+                  <span class="duration">${formatDuration(dur)}</span>
+                  <div class="progress-bar"><div class="progress-fill"></div></div>
+                </div>`;
+                    } else {
+                        content = `<div>${esc(m.text)}</div>`;
+                    }
+                    return `<div class="message ${isOwn?'own':'other'}">
+                <div class="sender"><img src="${avatar}" onerror="this.src='${getAvatarUrl('fallback')}'"> ${esc(m.char_name || 'Ghost')}</div>
+                ${content}
+                ${isOwn?'':`<button class="report-btn" data-char="${m.char_id}" data-msg="${m.id}">!</button>`}
+              </div>`;
+                }).join('');
+                $('messages').scrollTop = $('messages').scrollHeight;
+            }
 
-                var urlRes = db.storage.from('voice_messages').getPublicUrl(path);
-                await db.from('messages').insert({
-                    location_id: currentLocation,
-                    char_id: currentCharacterId,
-                    char_name: char.name,
-                    audio_url: urlRes.data.publicUrl,
-                    type: 'chat',
-                    duration: Math.round(duration)
+            function addMessageToChat(m) {
+                if (m.type === 'system') {
+                    $('messages').insertAdjacentHTML('beforeend',
+                        `<div class="message system">${esc(m.text)}</div>`);
+                } else {
+                    const isOwn = m.char_id === currentCharacterId;
+                    const char = currentCharacters.find(c => c.id === m.char_id);
+                    const avatar = char?.avatar_url || getAvatarUrl(m.char_name || 'unknown');
+                    let content;
+                    if (m.audio_url) {
+                        const dur = m.duration || 0;
+                        content = `<div class="voice-msg" data-audio="${m.audio_url}" data-duration="${dur}" data-msgid="${m.id}">
+                  <span class="play-icon">▶</span>
+                  <span class="duration">${formatDuration(dur)}</span>
+                  <div class="progress-bar"><div class="progress-fill"></div></div>
+                </div>`;
+                    } else {
+                        content = `<div>${esc(m.text)}</div>`;
+                    }
+                    $('messages').insertAdjacentHTML('beforeend',
+                        `<div class="message ${isOwn?'own':'other'}">
+                  <div class="sender"><img src="${avatar}" onerror="this.src='${getAvatarUrl('fallback')}'"> ${esc(m.char_name || 'Ghost')}</div>
+                  ${content}
+                  ${isOwn?'':`<button class="report-btn" data-char="${m.char_id}" data-msg="${m.id}">!</button>`}
+                </div>`);
+                }
+                $('messages').scrollTop = $('messages').scrollHeight;
+            }
+
+            function subscribeAll() {
+                db.channel('public:messages').on('postgres_changes', { event: 'INSERT', schema: 'public',
+                    table: 'messages' }, payload => {
+                    if (payload.new.location_id === currentLocation && payload.new.type !== 'system') {
+                        addMessageToChat(payload.new);
+                    }
+                }).subscribe();
+                db.channel('public:reports').on('postgres_changes', { event: '*', schema: 'public',
+                    table: 'reports' }, updateGuidePanel).subscribe();
+                db.channel('public:graveyard').on('postgres_changes', { event: '*', schema: 'public',
+                    table: 'graveyard' }, updateGraveyard).subscribe();
+                db.channel('public:online').on('postgres_changes', { event: '*', schema: 'public',
+                    table: 'online_players' }, loadOnlinePlayers).subscribe();
+                db.channel('public:daily').on('postgres_changes', { event: '*', schema: 'public',
+                    table: 'daily_tasks' }, loadDailyTask).subscribe();
+            }
+
+            // === 发送 ===
+            async function sendMessage() {
+                if (!currentLocation || !currentCharacterId) return;
+                const text = $('chat-input').value.trim();
+                if (!text) return;
+                if (/[\u4e00-\u9fff]/.test(text)) { alert('⚠️ English only! The Chief demands it.'); return; }
+                const char = currentCharacters.find(c => c.id === currentCharacterId);
+                await db.from('messages').insert({ location_id: currentLocation, char_id: currentCharacterId,
+                    char_name: char.name, text, type: 'chat' });
+                $('chat-input').value = '';
+            }
+
+            // === 语音 ===
+            async function startRecording() {
+                if (!currentLocation || !currentCharacterId) { alert('Enter a location first.'); return; }
+                if (isRecording) return;
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
+                    audioChunks = [];
+                    recordingStartTime = Date.now();
+                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
+                    mediaRecorder.onstop = async () => {
+                        stream.getTracks().forEach(t => t.stop());
+                        clearInterval(recordingTimer);
+                        const duration = (Date.now() - recordingStartTime) / 1000;
+                        $('cancel-voice-btn').style.display = 'none';
+                        $('recording-status').style.display = 'none';
+                        if (audioChunks.length === 0) { resetVoiceBtn(); return; }
+                        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const char = currentCharacters.find(c => c.id === currentCharacterId);
+                        const path = 'voice_' + Date.now() + '.webm';
+                        const { error: uploadError } = await db.storage.from('voice_messages').upload(path, blob, {
+                            contentType: 'audio/webm',
+                            cacheControl: '3600'
+                        });
+                        if (uploadError) { alert('Upload failed.'); resetVoiceBtn(); return; }
+                        const { data: urlData } = db.storage.from('voice_messages').getPublicUrl(path);
+                        await db.from('messages').insert({
+                            location_id: currentLocation,
+                            char_id: currentCharacterId,
+                            char_name: char.name,
+                            audio_url: urlData.publicUrl,
+                            type: 'chat',
+                            duration: Math.round(duration)
+                        });
+                        resetVoiceBtn();
+                    };
+                    mediaRecorder.start(100);
+                    isRecording = true;
+                    $('voice-btn').classList.add('recording');
+                    $('voice-btn').textContent = '🔴';
+                    $('cancel-voice-btn').style.display = 'inline-block';
+                    $('recording-status').style.display = 'inline';
+                    recordingTimer = setInterval(() => {
+                        $('recording-status').textContent = '🔴 ' + Math.floor((Date.now() -
+                            recordingStartTime) / 1000) + 's';
+                    }, 500);
+                } catch (e) { alert('Microphone access needed.'); }
+            }
+
+            function stopRecording() {
+                if (mediaRecorder && isRecording && mediaRecorder.state === 'recording') mediaRecorder.stop();
+            }
+
+            function cancelRecording() {
+                if (mediaRecorder && isRecording) {
+                    audioChunks = [];
+                    const stream = mediaRecorder.stream;
+                    mediaRecorder.onstop = () => {
+                        if (stream) stream.getTracks().forEach(t => t.stop());
+                        clearInterval(recordingTimer);
+                        resetVoiceBtn();
+                    };
+                    mediaRecorder.stop();
+                }
+            }
+
+            function resetVoiceBtn() {
+                $('voice-btn').classList.remove('recording');
+                $('voice-btn').textContent = '🎤';
+                $('cancel-voice-btn').style.display = 'none';
+                $('recording-status').style.display = 'none';
+                isRecording = false;
+            }
+
+            function playAudio(url, voiceMsgEl) {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    if (currentAudioMsg) {
+                        currentAudioMsg.classList.remove('playing');
+                        currentAudioMsg.querySelector('.play-icon').textContent = '▶';
+                        currentAudioMsg.querySelector('.progress-fill').style.width = '0%';
+                    }
+                    if (currentAudioMsg === voiceMsgEl) { currentAudio = null;
+                        currentAudioMsg = null; return; }
+                }
+                const audio = new Audio(url);
+                currentAudio = audio;
+                currentAudioMsg = voiceMsgEl;
+                voiceMsgEl.classList.add('playing');
+                voiceMsgEl.querySelector('.play-icon').textContent = '⏸';
+                const progressFill = voiceMsgEl.querySelector('.progress-fill');
+                const totalDur = parseFloat(voiceMsgEl.dataset.duration) || 0;
+                audio.ontimeupdate = () => {
+                    if (audio.duration && totalDur > 0) progressFill.style.width = Math.min((audio
+                        .currentTime / totalDur) * 100, 100) + '%';
+                };
+                audio.onended = () => {
+                    voiceMsgEl.classList.remove('playing');
+                    voiceMsgEl.querySelector('.play-icon').textContent = '▶';
+                    progressFill.style.width = '0%';
+                    currentAudio = null;
+                    currentAudioMsg = null;
+                };
+                audio.onerror = () => { voiceMsgEl.querySelector('.play-icon').textContent = '⚠️'; };
+                audio.play().catch(() => { voiceMsgEl.querySelector('.play-icon').textContent = '▶'; });
+            }
+
+            // === 角色卡 ===
+            function showCharacterCard(charId = null) {
+                const char = charId ? currentCharacters.find(c => c.id === charId) : currentCharacters.find(c => c
+                    .id === currentCharacterId);
+                if (!char) return;
+                $('character-card-content').innerHTML = `
+              <div style="text-align:center;margin-bottom:12px;">
+                <img src="${char.avatar_url || getAvatarUrl(char.name)}" style="width:60px;height:60px;border-radius:50%;background:#333;">
+                <h3 style="color:var(--gold);margin-top:6px;">${esc(char.name)}</h3>
+              </div>
+              <p><strong>Identity:</strong> ${esc(char.identity)}</p>
+              <p><strong>Occupation:</strong> ${esc(char.job)}</p>
+              <p><strong>Age:</strong> ${char.age}</p>
+              <p><strong>Reason:</strong> ${esc(char.reason)}</p>
+            `;
+                $('modal-character-card').classList.remove('hidden');
+            }
+
+            // === 创建角色 ===
+            function randomAvatarSeed() {
+                const seeds = ['cat', 'dog', 'fox', 'owl', 'bear', 'wolf', 'raven', 'lynx', 'hawk', 'deer', 'bat',
+                    'moth', 'crow', 'frog', 'newt'
+                ];
+                return seeds[Math.floor(Math.random() * seeds.length)] + Math.floor(Math.random() * 1000);
+            }
+
+            function updateAvatarPreview() {
+                const seed = $('char-avatar-seed').value.trim() || $('char-name').value.trim() || 'wanderer';
+                $('avatar-preview').src = getAvatarUrl(seed);
+            }
+
+            async function submitCharacter() {
+                const name = $('char-name').value.trim();
+                const identity = $('char-identity').value.trim();
+                const job = $('char-job').value.trim();
+                const age = parseInt($('char-age').value);
+                const reason = $('char-reason').value.trim();
+                const seed = $('char-avatar-seed').value.trim() || name || randomAvatarSeed();
+                const avatar_url = getAvatarUrl(seed);
+                if (!name || !identity || !job || !age || !reason) return alert('All fields required.');
+                if (/[\u4e00-\u9fff]/.test(name + identity + job + reason)) return alert('⚠️ English only!');
+                const { data } = await db.from('characters').insert({ name, identity, job, age, reason, avatar_url,
+                    alive: true }).select().single();
+                if (data) {
+                    currentCharacterId = data.id;
+                    localStorage.setItem('liars_world_current_char', data.id);
+                    await loadCharacters();
+                    $('modal-character').classList.add('hidden');
+                    updateUI();
+                    renderLocations();
+                    updateOnlineStatus();
+                }
+            }
+
+            // === 举报 ===
+            function openReportModal(charId, msgId) {
+                const char = currentCharacters.find(c => c.id === charId);
+                $('report-target-display').textContent = 'Reporting: ' + (char ? char.name : 'Unknown');
+                $('modal-report').dataset.charId = charId;
+                $('modal-report').dataset.msgId = msgId;
+                $('report-reason').value = '';
+                $('modal-report').classList.remove('hidden');
+            }
+
+            async function submitReport() {
+                const reason = $('report-reason').value.trim();
+                if (!reason) return alert('Explain the flaw.');
+                await db.from('reports').insert({
+                    reported_char_id: $('modal-report').dataset.charId,
+                    reporter_char_id: currentCharacterId,
+                    reason,
+                    status: 'pending'
                 });
+                $('modal-report').classList.add('hidden');
+                showBanner('✅ Report submitted. The Guide will review it.');
+                updateGuidePanel();
+            }
 
-                resetVoiceBtn();
-                isSendingVoice = false;
+            async function handleReport(reportId, action) {
+                if (!isAdmin) return alert('Only the Guide can judge reports.');
+                const { data: r } = await db.from('reports').select('*').eq('id', reportId).single();
+                if (!r || r.status !== 'pending') return;
+                if (action === 'approve') {
+                    await db.from('reports').update({ status: 'approved', reporter_feedback: 'Your report was upheld.',
+                        reported_feedback: 'You were executed for logical contradiction.' }).eq('id', reportId);
+                    await db.from('characters').update({ alive: false }).eq('id', r.reported_char_id);
+                    const char = currentCharacters.find(c => c.id === r.reported_char_id);
+                    await db.from('graveyard').insert({ char_id: r.reported_char_id, char_name: char?.name ||
+                            'Unknown', reason: r.reason });
+                    if (currentCharacterId === r.reported_char_id) { currentCharacterId = null;
+                        updateUI(); }
+                    showBanner('💀 ' + (char?.name || 'Someone') + ' has been executed.');
+                } else {
+                    await db.from('reports').update({ status: 'rejected', reporter_feedback: 'Report dismissed.',
+                        reported_feedback: 'A report against you was dismissed.' }).eq('id', reportId);
+                    showBanner('✅ Report dismissed.');
+                }
+                await loadCharacters();
+                updateGuidePanel();
+                updateGraveyard();
+            }
+
+            // === 管理面板 ===
+            async function updateGuidePanel() {
+                const { data } = await db.from('reports').select('*').eq('status', 'pending').order('created_at', {
+                    ascending: false });
+                $('report-count').textContent = data ? data.length : 0;
+                if (!data || !data.length) { $('report-list').innerHTML =
+                    '<p>No pending reports.</p>'; return; }
+                $('report-list').innerHTML = data.map(r => `<div style="background:#111;padding:6px;margin-bottom:4px;border-radius:3px;font-size:0.75em;">
+              <div><b>Target:</b> ${esc(r.reported_char_id)}</div>
+              <div><b>By:</b> ${esc(r.reporter_char_id)}</div>
+              <div><b>Flaw:</b> ${esc(r.reason)}</div>
+              <div style="margin-top:4px;display:flex;gap:4px;">
+                <button data-report="${r.id}" data-action="approve" class="btn small danger">💀</button>
+                <button data-report="${r.id}" data-action="reject" class="btn small">✅</button>
+              </div></div>`).join('');
+            }
+
+            async function updateGraveyard() {
+                const { data } = await db.from('graveyard').select('*').order('death_time', { ascending: false });
+                $('grave-count').textContent = data ? data.length : 0;
+                if (!data || !data.length) { $('tombstone-list').innerHTML =
+                    '<p>Empty... for now.</p>'; return; }
+                $('tombstone-list').innerHTML = data.map(g => {
+                    const remaining = Math.max(0, 600 - Math.floor((Date.now() - new Date(g.death_time).getTime()) /
+                        1000));
+                    const canRevive = remaining <= 0;
+                    return `<div style="padding:4px 0;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;gap:6px;">
+                <span>🪦 ${esc(g.char_name)}</span>
+                <span style="font-size:0.65em;">${canRevive ? '🌱' : Math.floor(remaining/60)+':'+(remaining%60).toString().padStart(2,'0')}</span>
+                ${canRevive?`<button data-revive="${g.char_id}" data-grave="${g.id}" style="background:var(--success);color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:0.65em;">Return</button>`:''}
+              </div>`;
+                }).join('');
+            }
+
+            function adminLogin() {
+                if ($('admin-password').value === ADMIN_PASSWORD) {
+                    isAdmin = true;
+                    $('admin-login').classList.add('hidden');
+                    $('admin-content').classList.remove('hidden');
+                    populateAdminSelects();
+                    showBanner('🔑 Admin access granted.');
+                } else { alert('Wrong password.'); }
+            }
+
+            function populateAdminSelects() {
+                $('admin-task-location').innerHTML = '<option value="all">All Locations</option>' + LOCATIONS.map(l =>
+                    `<option value="${l.id}">${l.icon} ${l.name}</option>`).join('');
+                $('admin-force-execute').innerHTML = '<option value="">-- Select --</option>' + currentCharacters.map(
+                    c => `<option value="${c.id}">${esc(c.name)} (${esc(c.identity)})</option>`).join('');
+            }
+
+            async function setDailyTask() {
+                if (!isAdmin) return;
+                const locId = $('admin-task-location').value;
+                const text = $('admin-task-text').value.trim();
+                if (!text) return alert('Enter a task.');
+                await db.from('daily_tasks').update({ active: false }).eq('active', true);
+                await db.from('daily_tasks').insert({ location_id: locId, task_text: text, active: true });
+                showBanner('📋 Daily task published!');
+                $('admin-task-text').value = '';
+                loadDailyTask();
+            }
+
+            async function forceExecute() {
+                if (!isAdmin) return;
+                const charId = $('admin-force-execute').value;
+                if (!charId) return;
+                const char = currentCharacters.find(c => c.id === charId);
+                await db.from('characters').update({ alive: false }).eq('id', charId);
+                await db.from('graveyard').insert({ char_id: charId, char_name: char?.name || 'Unknown',
+                    reason: 'Force executed by Guide.' });
+                await loadCharacters();
+                updateGraveyard();
+                populateAdminSelects();
+                if (currentCharacterId === charId) { currentCharacterId = null;
+                    updateUI(); }
+                showBanner('💀 Force executed: ' + (char?.name || charId));
+            }
+
+            async function deleteVoiceMessage() {
+                if (!isAdmin) return;
+                const msgId = $('admin-delete-voice').value.trim();
+                if (!msgId) return alert('Enter a message ID.');
+                const { data: msg } = await db.from('messages').select('*').eq('id', msgId).single();
+                if (msg && msg.audio_url) {
+                    const path = msg.audio_url.split('/').pop();
+                    await db.storage.from('voice_messages').remove([path]);
+                }
+                await db.from('messages').delete().eq('id', msgId);
+                showBanner('🗑️ Voice message deleted.');
+                $('admin-delete-voice').value = '';
+                if (currentLocation) loadMessages();
+            }
+
+            function adminLogout() {
+                isAdmin = false;
+                $('admin-login').classList.remove('hidden');
+                $('admin-content').classList.add('hidden');
+                $('admin-password').value = '';
+                showBanner('👋 Admin logged out.');
+            }
+
+            // === UI ===
+            function updateUI() {
+                updateSpeakAsList();
+                const char = currentCharacters.find(c => c.id === currentCharacterId);
+                const disp = $('current-role-display');
+                if (char) {
+                    disp.innerHTML =
+                        `<img src="${char.avatar_url || getAvatarUrl(char.name)}" onerror="this.src='${getAvatarUrl('fallback')}'"> ${esc(char.name)}`;
+                    disp.style.color = '#c9a96e';
+                } else {
+                    disp.innerHTML = '👤 Not in character';
+                    disp.style.color = '#8b7d6b';
+                }
+                const active = !!(currentCharacterId && currentLocation);
+                $('chat-input').disabled = !active;
+                $('send-btn').disabled = !active;
+                $('voice-btn').disabled = !active;
+            }
+
+            function updateSpeakAsList() {
+                $('speak-as').innerHTML = '<option value="">-- Speak as... --</option>' + currentCharacters.map(c =>
+                    `<option value="${c.id}" ${c.id===currentCharacterId?'selected':''}>${esc(c.name)}</option>`).join(
+                    '');
+            }
+
+            async function checkGraveyardTimers() {
+                const { data } = await db.from('graveyard').select('*').eq('revivable', false);
+                if (!data) return;
+                for (const g of data) {
+                    if ((Date.now() - new Date(g.death_time).getTime()) > 600000) {
+                        await db.from('graveyard').update({ revivable: true }).eq('id', g.id);
+                    }
+                }
+            }
+
+            // === 全局事件 ===
+            document.addEventListener('click', async (e) => {
+                const card = e.target.closest('.location-card');
+                if (card) { enterLocation(card.dataset.loc); return; }
+                const vmsg = e.target.closest('.voice-msg');
+                if (vmsg && !e.target.closest('.report-btn')) { playAudio(vmsg.dataset.audio, vmsg); return; }
+                if (e.target.classList.contains('report-btn')) { openReportModal(e.target.dataset.char, e.target
+                        .dataset.msg); return; }
+                if (e.target.dataset.report && e.target.dataset.action) { handleReport(e.target.dataset.report, e
+                        .target.dataset.action); return; }
+                if (e.target.dataset.revive) {
+                    const { revive, grave } = e.target.dataset;
+                    await db.from('graveyard').delete().eq('id', grave);
+                    await db.from('characters').delete().eq('id', revive);
+                    await loadCharacters();
+                    updateGraveyard();
+                    $('modal-character').classList.remove('hidden');
+                }
+                const senderEl = e.target.closest('.sender');
+                if (senderEl && !e.target.closest('.voice-msg') && !e.target.closest('.report-btn')) {
+                    const msgEl = senderEl.closest('.message');
+                    if (msgEl && msgEl.classList.contains('other')) {
+                        const reportBtn = msgEl.querySelector('.report-btn');
+                        if (reportBtn) showCharacterCard(reportBtn.dataset.char);
+                    }
+                }
+            });
+
+            $('btn-create-char').onclick = () => {
+                const seed = randomAvatarSeed();
+                $('char-avatar-seed').value = seed;
+                updateAvatarPreview();
+                ['char-name', 'char-identity', 'char-job', 'char-age', 'char-reason'].forEach(id => $(id)
+            .value = '');
+                $('modal-character').classList.remove('hidden');
             };
-
-            mediaRecorder.start(100);
-            isRecording = true;
-            $('voice-btn').classList.add('recording');
-            $('voice-btn').textContent = '🔴';
-            $('cancel-voice-btn').style.display = 'inline-block';
-            $('recording-status').style.display = 'inline';
-            recordingTimer = setInterval(function() {
-                $('recording-status').textContent = '🔴 ' + Math.floor((Date.now() - recordingStartTime) / 1000) + 's';
-            }, 500);
-        } catch (e) {
-            alert('Microphone access needed.');
-        }
-    }
-
-    function stopRecording() {
-        if (mediaRecorder && isRecording && mediaRecorder.state === 'recording') {
-            // 标记为要发送
-            isSendingVoice = true;
-            mediaRecorder.stop();
-        }
-    }
-
-    function cancelRecording() {
-        if (mediaRecorder && isRecording) {
-            // 标记为取消（不发送）
-            isSendingVoice = false;
-            audioChunks = [];
-            var stream = mediaRecorder.stream;
-            mediaRecorder.onstop = function() {
-                if (stream) stream.getTracks().forEach(function(t) { t.stop(); });
-                clearInterval(recordingTimer);
-                resetVoiceBtn();
+            $('btn-random-avatar').onclick = () => { $('char-avatar-seed').value = randomAvatarSeed();
+                updateAvatarPreview(); };
+            $('char-avatar-seed').oninput = updateAvatarPreview;
+            $('char-name').oninput = updateAvatarPreview;
+            $('btn-cancel-char').onclick = () => $('modal-character').classList.add('hidden');
+            $('btn-submit-char').onclick = submitCharacter;
+            $('btn-cancel-report').onclick = () => $('modal-report').classList.add('hidden');
+            $('btn-submit-report').onclick = submitReport;
+            $('btn-close-card').onclick = () => $('modal-character-card').classList.add('hidden');
+            $('btn-online').onclick = () => { $('online-panel').classList.toggle('hidden');
+                loadOnlinePlayers(); };
+            $('btn-graveyard').onclick = () => $('graveyard').classList.toggle('hidden');
+            $('btn-guide').onclick = () => $('guide-panel').classList.toggle('hidden');
+            $('btn-admin').onclick = () => {
+                $('admin-panel').classList.toggle('hidden');
+                if (!isAdmin) { $('admin-login').classList.remove('hidden');
+                    $('admin-content').classList.add('hidden'); } else { populateAdminSelects(); }
             };
-            mediaRecorder.stop();
-        }
-    }
+            $('btn-admin-login').onclick = adminLogin;
+            $('admin-password').onkeydown = e => { if (e.key === 'Enter') adminLogin(); };
+            $('btn-set-task').onclick = setDailyTask;
+            $('btn-force-execute').onclick = forceExecute;
+            $('btn-delete-voice').onclick = deleteVoiceMessage;
+            $('btn-admin-logout').onclick = adminLogout;
+            $('send-btn').onclick = sendMessage;
+            $('chat-input').onkeydown = e => { if (e.key === 'Enter') sendMessage(); };
+            $('voice-btn').onmousedown = e => { e.preventDefault();
+                startRecording(); };
+            $('voice-btn').onmouseup = e => { e.preventDefault();
+                stopRecording(); };
+            $('voice-btn').onmouseleave = e => { if (isRecording) stopRecording(); };
+            $('voice-btn').ontouchstart = e => { e.preventDefault();
+                startRecording(); };
+            $('voice-btn').ontouchend = e => { e.preventDefault();
+                stopRecording(); };
+            $('cancel-voice-btn').onclick = cancelRecording;
+            $('cancel-voice-btn').onmousedown = e => e.preventDefault();
+            $('speak-as').onchange = function() {
+                currentCharacterId = this.value || null;
+                if (currentCharacterId) localStorage.setItem('liars_world_current_char', currentCharacterId);
+                else localStorage.removeItem('liars_world_current_char');
+                updateUI();
+                updateOnlineStatus();
+            };
+            window.addEventListener('beforeunload', () => {
+                if (currentCharacterId) db.from('online_players').delete().eq('char_id', currentCharacterId);
+            });
 
-    function resetVoiceBtn() {
-        $('voice-btn').classList.remove('recording');
-        $('voice-btn').textContent = '🎤';
-        $('cancel-voice-btn').style.display = 'none';
-        $('recording-status').style.display = 'none';
-        isRecording = false;
-    }
-
-    // === 语音播放 ===
-    function playAudio(url, voiceMsgEl) {
-        if (currentAudio) {
-            currentAudio.pause();
-            if (currentAudioMsg) {
-                currentAudioMsg.classList.remove('playing');
-                currentAudioMsg.querySelector('.play-icon').textContent = '▶';
-                currentAudioMsg.querySelector('.progress-fill').style.width = '0%';
-            }
-            if (currentAudioMsg === voiceMsgEl) { currentAudio = null; currentAudioMsg = null; return; }
-        }
-        var audio = new Audio(url);
-        currentAudio = audio;
-        currentAudioMsg = voiceMsgEl;
-        voiceMsgEl.classList.add('playing');
-        voiceMsgEl.querySelector('.play-icon').textContent = '⏸';
-        var progressFill = voiceMsgEl.querySelector('.progress-fill');
-        var totalDur = parseFloat(voiceMsgEl.dataset.duration) || 0;
-        audio.ontimeupdate = function() {
-            if (audio.duration && totalDur > 0) progressFill.style.width = Math.min((audio.currentTime / totalDur) * 100, 100) + '%';
-        };
-        audio.onended = function() {
-            voiceMsgEl.classList.remove('playing');
-            voiceMsgEl.querySelector('.play-icon').textContent = '▶';
-            progressFill.style.width = '0%';
-            currentAudio = null;
-            currentAudioMsg = null;
-        };
-        audio.onerror = function() { voiceMsgEl.querySelector('.play-icon').textContent = '⚠️'; };
-        audio.play().catch(function() { voiceMsgEl.querySelector('.play-icon').textContent = '▶'; });
-    }
-
-    // === 角色卡 ===
-    function showCharacterCard(charId) {
-        var char = charId ? currentCharacters.find(function(c) { return c.id === charId; }) : currentCharacters.find(function(c) { return c.id === currentCharacterId; });
-        if (!char) return;
-        $('character-card-content').innerHTML = '<div style="text-align:center;margin-bottom:12px;"><img src="' + (char.avatar_url || getAvatarUrl(char.name)) + '" style="width:60px;height:60px;border-radius:50%;background:#333;"><h3 style="color:var(--gold);margin-top:6px;">' + esc(char.name) + '</h3></div><p><strong>Identity:</strong> ' + esc(char.identity) + '</p><p><strong>Occupation:</strong> ' + esc(char.job) + '</p><p><strong>Age:</strong> ' + char.age + '</p><p><strong>Reason:</strong> ' + esc(char.reason) + '</p>';
-        $('modal-character-card').classList.remove('hidden');
-    }
-
-    // === 创建角色 ===
-    function randomAvatarSeed() {
-        var seeds = ['cat', 'dog', 'fox', 'owl', 'bear', 'wolf', 'raven', 'lynx', 'hawk', 'deer', 'bat', 'moth', 'crow', 'frog', 'newt'];
-        return seeds[Math.floor(Math.random() * seeds.length)] + Math.floor(Math.random() * 1000);
-    }
-
-    function updateAvatarPreview() {
-        var seed = $('char-avatar-seed').value.trim() || $('char-name').value.trim() || 'wanderer';
-        $('avatar-preview').src = getAvatarUrl(seed);
-    }
-
-    async function submitCharacter() {
-        var name = $('char-name').value.trim();
-        var identity = $('char-identity').value.trim();
-        var job = $('char-job').value.trim();
-        var age = parseInt($('char-age').value);
-        var reason = $('char-reason').value.trim();
-        var seed = $('char-avatar-seed').value.trim() || name || randomAvatarSeed();
-        var avatar_url = getAvatarUrl(seed);
-        if (!name || !identity || !job || !age || !reason) return alert('All fields required.');
-        if (/[\u4e00-\u9fff]/.test(name + identity + job + reason)) return alert('English only!');
-        var res = await db.from('characters').insert({ name: name, identity: identity, job: job, age: age, reason: reason, avatar_url: avatar_url, alive: true }).select().single();
-        if (res.data) {
-            currentCharacterId = res.data.id;
-            localStorage.setItem('liars_world_current_char', res.data.id);
-            await loadCharacters();
-            $('modal-character').classList.add('hidden');
-            updateUI();
-            renderLocations();
-            updateOnlineStatus();
-        }
-    }
-
-    // === 举报 ===
-    function openReportModal(charId, msgId) {
-        var char = currentCharacters.find(function(c) { return c.id === charId; });
-        $('report-target-display').textContent = 'Reporting: ' + (char ? char.name : 'Unknown');
-        $('modal-report').dataset.charId = charId;
-        $('modal-report').dataset.msgId = msgId;
-        $('report-reason').value = '';
-        $('modal-report').classList.remove('hidden');
-    }
-
-    async function submitReport() {
-        var reason = $('report-reason').value.trim();
-        if (!reason) return alert('Explain the flaw.');
-        await db.from('reports').insert({ reported_char_id: $('modal-report').dataset.charId, reporter_char_id: currentCharacterId, reason: reason, status: 'pending' });
-        $('modal-report').classList.add('hidden');
-        showBanner('Report submitted.');
-        updateGuidePanel();
-    }
-
-    async function handleReport(reportId, action) {
-        if (!isAdmin) return alert('Only the Guide can judge reports.');
-        var res = await db.from('reports').select('*').eq('id', reportId).single();
-        var r = res.data;
-        if (!r || r.status !== 'pending') return;
-        if (action === 'approve') {
-            await db.from('reports').update({ status: 'approved', reporter_feedback: 'Report upheld.', reported_feedback: 'Executed for contradiction.' }).eq('id', reportId);
-            await db.from('characters').update({ alive: false }).eq('id', r.reported_char_id);
-            var char = currentCharacters.find(function(c) { return c.id === r.reported_char_id; });
-            await db.from('graveyard').insert({ char_id: r.reported_char_id, char_name: char ? char.name : 'Unknown', reason: r.reason });
-            if (currentCharacterId === r.reported_char_id) { currentCharacterId = null; updateUI(); }
-            showBanner('💀 ' + (char ? char.name : 'Someone') + ' executed.');
-        } else {
-            await db.from('reports').update({ status: 'rejected', reporter_feedback: 'Report dismissed.', reported_feedback: 'Report dismissed.' }).eq('id', reportId);
-            showBanner('Report dismissed.');
-        }
-        await loadCharacters();
-        updateGuidePanel();
-        updateGraveyard();
-    }
-
-    // === 管理面板 ===
-    async function updateGuidePanel() {
-        var res = await db.from('reports').select('*').eq('status', 'pending').order('created_at', { ascending: false });
-        $('report-count').textContent = res.data ? res.data.length : 0;
-        if (!res.data || !res.data.length) { $('report-list').innerHTML = '<p>No pending reports.</p>'; return; }
-        $('report-list').innerHTML = res.data.map(function(r) {
-            return '<div style="background:#111;padding:6px;margin-bottom:4px;border-radius:3px;font-size:0.75em;"><div><b>Target:</b> ' + esc(r.reported_char_id) + '</div><div><b>By:</b> ' + esc(r.reporter_char_id) + '</div><div><b>Flaw:</b> ' + esc(r.reason) + '</div><div style="margin-top:4px;display:flex;gap:4px;"><button data-report="' + r.id + '" data-action="approve" class="btn small danger">💀</button><button data-report="' + r.id + '" data-action="reject" class="btn small">✅</button></div></div>';
-        }).join('');
-    }
-
-    async function updateGraveyard() {
-        var res = await db.from('graveyard').select('*').order('death_time', { ascending: false });
-        $('grave-count').textContent = res.data ? res.data.length : 0;
-        if (!res.data || !res.data.length) { $('tombstone-list').innerHTML = '<p>Empty... for now.</p>'; return; }
-        $('tombstone-list').innerHTML = res.data.map(function(g) {
-            var remaining = Math.max(0, 600 - Math.floor((Date.now() - new Date(g.death_time).getTime()) / 1000));
-            var canRevive = remaining <= 0;
-            return '<div style="padding:4px 0;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;gap:6px;"><span>🪦 ' + esc(g.char_name) + '</span><span style="font-size:0.65em;">' + (canRevive ? '🌱' : Math.floor(remaining / 60) + ':' + (remaining % 60).toString().padStart(2, '0')) + '</span>' + (canRevive ? '<button data-revive="' + g.char_id + '" data-grave="' + g.id + '" style="background:var(--success);color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:0.65em;">Return</button>' : '') + '</div>';
-        }).join('');
-    }
-
-    function adminLogin() {
-        if ($('admin-password').value === ADMIN_PASSWORD) {
-            isAdmin = true;
-            $('admin-login').classList.add('hidden');
-            $('admin-content').classList.remove('hidden');
-            populateAdminSelects();
-            showBanner('Admin access granted.');
-        } else { alert('Wrong password.'); }
-    }
-
-    function populateAdminSelects() {
-        $('admin-task-location').innerHTML = '<option value="all">All Locations</option>' + LOCATIONS.map(function(l) { return '<option value="' + l.id + '">' + l.icon + ' ' + l.name + '</option>'; }).join('');
-        $('admin-force-execute').innerHTML = '<option value="">-- Select --</option>' + currentCharacters.map(function(c) { return '<option value="' + c.id + '">' + esc(c.name) + ' (' + esc(c.identity) + ')</option>'; }).join('');
-    }
-
-    async function setDailyTask() {
-        if (!isAdmin) return;
-        var locId = $('admin-task-location').value;
-        var text = $('admin-task-text').value.trim();
-        if (!text) return alert('Enter a task.');
-        await db.from('daily_tasks').update({ active: false }).eq('active', true);
-        await db.from('daily_tasks').insert({ location_id: locId, task_text: text, active: true });
-        showBanner('Daily task published!');
-        $('admin-task-text').value = '';
-        loadDailyTask();
-    }
-
-    async function forceExecute() {
-        if (!isAdmin) return;
-        var charId = $('admin-force-execute').value;
-        if (!charId) return;
-        var char = currentCharacters.find(function(c) { return c.id === charId; });
-        await db.from('characters').update({ alive: false }).eq('id', charId);
-        await db.from('graveyard').insert({ char_id: charId, char_name: char ? char.name : 'Unknown', reason: 'Force executed by Guide.' });
-        await loadCharacters();
-        updateGraveyard();
-        populateAdminSelects();
-        if (currentCharacterId === charId) { currentCharacterId = null; updateUI(); }
-        showBanner('💀 Force executed: ' + (char ? char.name : charId));
-    }
-
-    async function deleteVoiceMessage() {
-        if (!isAdmin) return;
-        var msgId = $('admin-delete-voice').value.trim();
-        if (!msgId) return alert('Enter a message ID.');
-        var res = await db.from('messages').select('*').eq('id', msgId).single();
-        if (res.data && res.data.audio_url) {
-            var path = res.data.audio_url.split('/').pop();
-            await db.storage.from('voice_messages').remove([path]);
-        }
-        await db.from('messages').delete().eq('id', msgId);
-        showBanner('Voice message deleted.');
-        $('admin-delete-voice').value = '';
-        if (currentLocation) loadMessages();
-    }
-
-    function adminLogout() {
-        isAdmin = false;
-        $('admin-login').classList.remove('hidden');
-        $('admin-content').classList.add('hidden');
-        $('admin-password').value = '';
-        showBanner('Admin logged out.');
-    }
-
-    // === UI ===
-    function updateUI() {
-        updateSpeakAsList();
-        var char = currentCharacters.find(function(c) { return c.id === currentCharacterId; });
-        var disp = $('current-role-display');
-        if (char) {
-            disp.innerHTML = '<img src="' + (char.avatar_url || getAvatarUrl(char.name)) + '" onerror="this.src=\'' + getAvatarUrl('fallback') + '\'"> ' + esc(char.name);
-            disp.style.color = '#c9a96e';
-        } else {
-            disp.innerHTML = '👤 Not in character';
-            disp.style.color = '#8b7d6b';
-        }
-        var active = !!(currentCharacterId && currentLocation);
-        $('chat-input').disabled = !active;
-        $('send-btn').disabled = !active;
-        $('voice-btn').disabled = !active;
-    }
-
-    function updateSpeakAsList() {
-        $('speak-as').innerHTML = '<option value="">-- Speak as... --</option>' + currentCharacters.map(function(c) { return '<option value="' + c.id + '"' + (c.id === currentCharacterId ? ' selected' : '') + '>' + esc(c.name) + '</option>'; }).join('');
-    }
-
-    async function checkGraveyardTimers() {
-        var res = await db.from('graveyard').select('*').eq('revivable', false);
-        if (!res.data) return;
-        for (var i = 0; i < res.data.length; i++) {
-            var g = res.data[i];
-            if ((Date.now() - new Date(g.death_time).getTime()) > 600000) {
-                await db.from('graveyard').update({ revivable: true }).eq('id', g.id);
-            }
-        }
-    }
-
-    // === 全局事件 ===
-    document.addEventListener('click', async function(e) {
-        var card = e.target.closest('.location-card');
-        if (card) { enterLocation(card.dataset.loc); return; }
-        var vmsg = e.target.closest('.voice-msg');
-        if (vmsg && !e.target.closest('.report-btn')) { playAudio(vmsg.dataset.audio, vmsg); return; }
-        if (e.target.classList.contains('report-btn')) { openReportModal(e.target.dataset.char, e.target.dataset.msg); return; }
-        if (e.target.dataset.report && e.target.dataset.action) { handleReport(e.target.dataset.report, e.target.dataset.action); return; }
-        if (e.target.dataset.revive) {
-            await db.from('graveyard').delete().eq('id', e.target.dataset.grave);
-            await db.from('characters').delete().eq('id', e.target.dataset.revive);
-            await loadCharacters();
-            updateGraveyard();
-            $('modal-character').classList.remove('hidden');
-        }
-        var senderEl = e.target.closest('.sender');
-        if (senderEl && !e.target.closest('.voice-msg') && !e.target.closest('.report-btn')) {
-            var msgEl = senderEl.closest('.message');
-            if (msgEl && msgEl.classList.contains('other')) {
-                var reportBtn = msgEl.querySelector('.report-btn');
-                if (reportBtn) showCharacterCard(reportBtn.dataset.char);
-            }
-        }
-    });
-
-    // === 按钮事件绑定 ===
-    $('btn-create-char').onclick = function() {
-        $('char-avatar-seed').value = randomAvatarSeed();
-        updateAvatarPreview();
-        ['char-name', 'char-identity', 'char-job', 'char-age', 'char-reason'].forEach(function(id) { $(id).value = ''; });
-        $('modal-character').classList.remove('hidden');
-    };
-    $('btn-random-avatar').onclick = function() { $('char-avatar-seed').value = randomAvatarSeed(); updateAvatarPreview(); };
-    $('char-avatar-seed').oninput = updateAvatarPreview;
-    $('char-name').oninput = updateAvatarPreview;
-    $('btn-cancel-char').onclick = function() { $('modal-character').classList.add('hidden'); };
-    $('btn-submit-char').onclick = submitCharacter;
-    $('btn-cancel-report').onclick = function() { $('modal-report').classList.add('hidden'); };
-    $('btn-submit-report').onclick = submitReport;
-    $('btn-close-card').onclick = function() { $('modal-character-card').classList.add('hidden'); };
-    $('btn-online').onclick = function() { $('online-panel').classList.toggle('hidden'); loadOnlinePlayers(); };
-    $('btn-graveyard').onclick = function() { $('graveyard').classList.toggle('hidden'); };
-    $('btn-guide').onclick = function() { $('guide-panel').classList.toggle('hidden'); };
-    $('btn-admin').onclick = function() {
-        $('admin-panel').classList.toggle('hidden');
-        if (!isAdmin) { $('admin-login').classList.remove('hidden');
-            $('admin-content').classList.add('hidden'); } else { populateAdminSelects(); }
-    };
-    $('btn-admin-login').onclick = adminLogin;
-    $('admin-password').onkeydown = function(e) { if (e.key === 'Enter') adminLogin(); };
-    $('btn-set-task').onclick = setDailyTask;
-    $('btn-force-execute').onclick = forceExecute;
-    $('btn-delete-voice').onclick = deleteVoiceMessage;
-    $('btn-admin-logout').onclick = adminLogout;
-    $('send-btn').onclick = sendMessage;
-    $('chat-input').onkeydown = function(e) { if (e.key === 'Enter') sendMessage(); };
-
-    // 语音按钮事件
-    $('voice-btn').addEventListener('mousedown', function(e) { e.preventDefault();
-        startRecording(); });
-    $('voice-btn').addEventListener('mouseup', function(e) { e.preventDefault();
-        stopRecording(); });
-    $('voice-btn').addEventListener('mouseleave', function(e) { if (isRecording) stopRecording(); });
-    $('voice-btn').addEventListener('touchstart', function(e) { e.preventDefault();
-        startRecording(); });
-    $('voice-btn').addEventListener('touchend', function(e) { e.preventDefault();
-        stopRecording(); });
-    $('cancel-voice-btn').addEventListener('click', cancelRecording);
-    $('cancel-voice-btn').addEventListener('mousedown', function(e) { e.preventDefault(); });
-
-    $('speak-as').onchange = function() {
-        currentCharacterId = this.value || null;
-        if (currentCharacterId) localStorage.setItem('liars_world_current_char', currentCharacterId);
-        else localStorage.removeItem('liars_world_current_char');
-        updateUI();
-        updateOnlineStatus();
-    };
-
-    window.addEventListener('beforeunload', function() {
-        if (currentCharacterId) db.from('online_players').delete().eq('char_id', currentCharacterId);
-    });
-
-    // === 启动 ===
-    (async function init() {
-        await loadCharacters();
-        await loadDailyTask();
-        renderLocations();
-        updateSpeakAsList();
-        updateGraveyard();
-        updateGuidePanel();
-        loadOnlinePlayers();
-        subscribeAll();
-        setInterval(checkGraveyardTimers, 5000);
-        var saved = localStorage.getItem('liars_world_current_char');
-        if (saved && currentCharacters.find(function(c) { return c.id === saved && c.alive; })) {
-            currentCharacterId = saved;
-            updateUI();
-            updateOnlineStatus();
-        }
-        console.log('✅ Liar\'s World Ready');
-    })();
-})();
+            // === 启动 ===
+            (async function init() {
+                await loadCharacters();
+                await loadDailyTask();
+                renderLocations();
+                updateSpeakAsList();
+                updateGraveyard();
+                updateGuidePanel();
+                loadOnlinePlayers();
+                subscribeAll();
+                setInterval(checkGraveyardTimers, 5000);
+                const saved = localStorage.getItem('liars_world_current_char');
+                if (saved && currentCharacters.find(c => c.id === saved && c.alive)) {
+                    currentCharacterId = saved;
+                    updateUI();
+                    updateOnlineStatus();
+                }
+                console.log('✅ Liar\'s World v2 Ready');
+            })();
+        })();
+    </script>
+</body>
+</html>
