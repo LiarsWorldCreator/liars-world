@@ -20,295 +20,89 @@
             --input-bg: #1c2a3a;
             --recording: #cc3333;
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            -webkit-tap-highlight-color: transparent;
+            font-family:'Georgia',serif; background:var(--bg); color:var(--text);
+            min-height:100vh; -webkit-tap-highlight-color:transparent;
         }
         #top-bar {
-            background: var(--panel);
-            border-bottom: 1px solid var(--border);
-            padding: 8px 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 6px;
+            background:var(--panel); border-bottom:1px solid var(--border);
+            padding:8px 12px; display:flex; justify-content:space-between;
+            align-items:center; flex-wrap:wrap; gap:6px;
         }
-        #top-bar h1 {
-            font-size: 1.1em;
-            letter-spacing: 2px;
-            color: var(--gold);
-        }
-        #user-area {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        #current-role-display {
-            background: var(--highlight);
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.75em;
-        }
+        #top-bar h1 { font-size:1.1em; letter-spacing:2px; color:var(--gold); }
+        #user-area { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+        #current-role-display { background:var(--highlight); padding:4px 10px; border-radius:4px; font-size:0.75em; }
         .btn {
-            background: var(--border);
-            color: var(--text);
-            border: 1px solid var(--gold);
-            padding: 6px 12px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 0.75em;
-            border-radius: 3px;
+            background:var(--border); color:var(--text); border:1px solid var(--gold);
+            padding:6px 12px; cursor:pointer; font-family:inherit; font-size:0.75em;
+            border-radius:3px; transition:all 0.2s;
         }
-        .btn.danger {
-            border-color: var(--danger);
-        }
-        .btn.small {
-            padding: 4px 8px;
-            font-size: 0.65em;
-        }
-        #main-container {
-            display: flex;
-            height: calc(100vh - 60px);
-        }
-        #sidebar {
-            width: 280px;
-            background: var(--panel);
-            padding: 10px;
-            overflow-y: auto;
-            flex-shrink: 0;
-        }
-        #sidebar h2 {
-            font-size: 0.8em;
-            color: var(--gold);
-            margin-bottom: 10px;
-        }
+        .btn.danger { border-color:var(--danger); }
+        .btn.small { padding:4px 8px; font-size:0.65em; }
+        .btn.recording { background:var(--recording); border-color:#ff4444; animation:pulse 0.8s infinite; color:#fff; }
+        @keyframes pulse { 0%,100%{ box-shadow:0 0 0 0 rgba(204,51,51,0.5); } 50%{ box-shadow:0 0 0 12px rgba(204,51,51,0); } }
+        #main-container { display:flex; height:calc(100vh - 60px); }
+        #sidebar { width:280px; background:var(--panel); padding:10px; overflow-y:auto; flex-shrink:0; }
+        #sidebar h2 { font-size:0.8em; color:var(--gold); margin-bottom:10px; }
         .location-card {
-            background: var(--chat-bg);
-            border: 1px solid var(--border);
-            padding: 10px;
-            margin-bottom: 6px;
-            cursor: pointer;
-            border-radius: 4px;
+            background:var(--chat-bg); border:1px solid var(--border);
+            padding:10px; margin-bottom:6px; cursor:pointer; border-radius:4px;
         }
-        .location-card.active {
-            border-color: var(--gold);
-            background: #121e32;
-        }
-        .location-card .name {
-            font-size: 0.9em;
-        }
-        .location-card .capacity {
-            font-size: 0.65em;
-            color: var(--text-dark);
-        }
-        .location-card .capacity.full {
-            color: var(--danger);
-        }
-        #chat-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: var(--chat-bg);
-        }
-        #chat-header {
-            background: var(--panel);
-            padding: 10px;
-            border-bottom: 1px solid var(--border);
-        }
-        #chat-header h3 {
-            color: var(--gold);
-            font-size: 0.9em;
-        }
-        #messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .message {
-            max-width: 80%;
-            padding: 8px 12px;
-            border-radius: 6px;
-            font-size: 0.85em;
-            position: relative;
-        }
-        .message .sender {
-            font-size: 0.65em;
-            color: var(--gold);
-            font-weight: bold;
-        }
-        .message.own {
-            align-self: flex-end;
-            background: #1a3a5c;
-        }
-        .message.other {
-            align-self: flex-start;
-            background: #1a1a2e;
-            border: 1px solid var(--border);
-        }
-        .message.system {
-            align-self: center;
-            color: var(--text-dark);
-            font-style: italic;
-            font-size: 0.75em;
-        }
+        .location-card.active { border-color:var(--gold); background:#121e32; }
+        .location-card .name { font-size:0.9em; }
+        .location-card .capacity { font-size:0.65em; color:var(--text-dark); }
+        .location-card .capacity.full { color:var(--danger); }
+        #chat-area { flex:1; display:flex; flex-direction:column; background:var(--chat-bg); }
+        #chat-header { background:var(--panel); padding:10px; border-bottom:1px solid var(--border); }
+        #chat-header h3 { color:var(--gold); font-size:0.9em; }
+        #messages { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:6px; }
+        .message { max-width:80%; padding:8px 12px; border-radius:6px; font-size:0.85em; position:relative; }
+        .message .sender { font-size:0.65em; color:var(--gold); font-weight:bold; margin-bottom:2px; }
+        .message.own { align-self:flex-end; background:#1a3a5c; }
+        .message.other { align-self:flex-start; background:#1a1a2e; border:1px solid var(--border); }
+        .message.system { align-self:center; color:var(--text-dark); font-style:italic; font-size:0.75em; text-align:center; }
         .report-btn {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: var(--danger);
-            color: #fff;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 10px;
-            display: none;
+            position:absolute; top:-8px; right:-8px; background:var(--danger);
+            color:#fff; width:22px; height:22px; border-radius:50%;
+            cursor:pointer; font-size:10px; display:none; border:none;
+            align-items:center; justify-content:center;
         }
-        .message.other:hover .report-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+        .message.other:hover .report-btn { display:inline-flex; }
+        .voice-msg {
+            display:inline-flex; align-items:center; gap:8px;
+            background:#1a3050; padding:6px 12px; border-radius:20px;
+            cursor:pointer; font-size:0.8em; user-select:none;
         }
-        .audio-msg {
-            cursor: pointer;
-            background: #1a3050;
-            padding: 6px 10px;
-            border-radius: 15px;
-            font-size: 0.8em;
+        .voice-msg .play-icon { font-size:1.2em; }
+        .voice-msg .duration { font-size:0.7em; color:var(--text-dark); }
+        .voice-msg .progress-bar {
+            width:60px; height:3px; background:#333; border-radius:2px; overflow:hidden;
         }
-        #input-area {
-            padding: 10px;
-            background: var(--panel);
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-        #input-area input {
-            flex: 1;
-            background: var(--input-bg);
-            color: var(--text);
-            border: 1px solid var(--border);
-            padding: 8px;
-            border-radius: 3px;
-        }
-        #input-area select {
-            background: var(--input-bg);
-            color: var(--text);
-            border: 1px solid var(--border);
-            padding: 8px;
-            border-radius: 3px;
-        }
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 200;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal {
-            background: var(--panel);
-            border: 1px solid var(--gold);
-            padding: 20px;
-            width: 92%;
-            max-width: 500px;
-            border-radius: 6px;
-        }
-        .modal h2 {
-            color: var(--gold);
-            margin-bottom: 10px;
-        }
-        .modal label {
-            display: block;
-            color: var(--text-dark);
-            font-size: 0.7em;
-            margin-top: 8px;
-        }
-        .modal input,
-        .modal textarea {
-            width: 100%;
-            background: var(--input-bg);
-            color: var(--text);
-            border: 1px solid var(--border);
-            padding: 8px;
-            margin-top: 4px;
-            border-radius: 3px;
-        }
-        .modal .btn-row {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-            justify-content: flex-end;
-        }
-        .hidden {
-            display: none !important;
-        }
-        #graveyard,
-        #guide-panel {
-            position: fixed;
-            bottom: 10px;
-            background: var(--panel);
-            padding: 10px;
-            border-radius: 6px;
-            z-index: 150;
-            font-size: 0.8em;
-            max-width: 300px;
-        }
-        #graveyard {
-            right: 10px;
-            border: 1px solid #3a2a1a;
-        }
-        #guide-panel {
-            left: 10px;
-            border: 1px solid var(--gold);
-        }
-        @media (max-width: 768px) {
-            #main-container {
-                flex-direction: column;
-            }
-            #sidebar {
-                width: 100%;
-                max-height: 160px;
-                display: flex;
-                gap: 6px;
-                overflow-x: auto;
-            }
-            #sidebar h2 {
-                display: none;
-            }
-            .location-card {
-                flex: 0 0 auto;
-                min-width: 80px;
-                text-align: center;
-                margin-bottom: 0;
-            }
-            #chat-area {
-                min-height: 50vh;
-            }
-            #graveyard,
-            #guide-panel {
-                position: static;
-                margin: 4px;
-                max-width: none;
-            }
+        .voice-msg .progress-fill { height:100%; background:var(--gold); width:0%; transition:width 0.1s linear; }
+        #input-area { padding:10px; background:var(--panel); display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+        #input-area input { flex:1; min-width:100px; background:var(--input-bg); color:var(--text); border:1px solid var(--border); padding:8px; border-radius:3px; font-family:inherit; }
+        #input-area select { background:var(--input-bg); color:var(--text); border:1px solid var(--border); padding:8px; border-radius:3px; font-family:inherit; }
+        #voice-btn { font-size:1.2em; padding:8px 14px; min-width:44px; }
+        #cancel-voice-btn { display:none; background:var(--danger); color:#fff; border:none; padding:6px 10px; border-radius:3px; cursor:pointer; font-size:0.7em; }
+        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:200; display:flex; align-items:center; justify-content:center; }
+        .modal { background:var(--panel); border:1px solid var(--gold); padding:20px; width:92%; max-width:500px; border-radius:6px; max-height:85vh; overflow-y:auto; }
+        .modal h2 { color:var(--gold); margin-bottom:10px; font-size:1em; }
+        .modal label { display:block; color:var(--text-dark); font-size:0.7em; margin-top:8px; text-transform:uppercase; }
+        .modal input,.modal textarea { width:100%; background:var(--input-bg); color:var(--text); border:1px solid var(--border); padding:8px; margin-top:4px; border-radius:3px; font-family:inherit; }
+        .modal textarea { min-height:60px; resize:vertical; }
+        .modal .btn-row { display:flex; gap:8px; margin-top:12px; justify-content:flex-end; }
+        .hidden { display:none !important; }
+        #graveyard,#guide-panel { position:fixed; bottom:10px; background:var(--panel); padding:10px; border-radius:6px; z-index:150; font-size:0.8em; max-width:300px; }
+        #graveyard { right:10px; border:1px solid #3a2a1a; }
+        #guide-panel { left:10px; border:1px solid var(--gold); }
+        @media (max-width:768px) {
+            #main-container { flex-direction:column; }
+            #sidebar { width:100%; max-height:160px; display:flex; gap:6px; overflow-x:auto; }
+            #sidebar h2 { display:none; }
+            .location-card { flex:0 0 auto; min-width:80px; text-align:center; margin-bottom:0; }
+            #chat-area { min-height:50vh; }
+            #graveyard,#guide-panel { position:static; margin:4px; max-width:none; }
         }
     </style>
 </head>
@@ -334,6 +128,7 @@
                 <select id="speak-as"><option value="">-- Speak as... --</option></select>
                 <input type="text" id="chat-input" placeholder="English only..." disabled>
                 <button class="btn" id="voice-btn" disabled>🎤</button>
+                <button class="btn" id="cancel-voice-btn">✕ Cancel</button>
                 <button class="btn" id="send-btn" disabled>Send</button>
             </div>
         </div>
@@ -361,10 +156,6 @@
     </div>
 
     <script>
-        // ═══════════════════════════════════
-        //  LIAR'S WORLD — 完整引擎
-        // ═══════════════════════════════════
-
         (function() {
             const SUPABASE_URL = 'https://jhxvmwdrqwfakeaptbdt.supabase.co';
             const SUPABASE_ANON_KEY =
@@ -389,28 +180,22 @@
             let mediaRecorder = null;
             let audioChunks = [];
             let isRecording = false;
+            let recordingStartTime = 0;
+            let recordingTimer = null;
+            let recordingDuration = 0;
 
-            // DOM 缓存
             const $ = (id) => document.getElementById(id);
-            const $locationList = $('location-list');
-            const $chatTitle = $('chat-title');
-            const $messages = $('messages');
-            const $speakAs = $('speak-as');
-            const $chatInput = $('chat-input');
-            const $sendBtn = $('send-btn');
-            const $voiceBtn = $('voice-btn');
-            const $roleDisplay = $('current-role-display');
-            const $graveCount = $('grave-count');
-            const $reportCount = $('report-count');
-            const $tombstoneList = $('tombstone-list');
-            const $reportList = $('report-list');
-            const $modalChar = $('modal-character');
-            const $modalReport = $('modal-report');
 
             function esc(str) {
                 const d = document.createElement('div');
                 d.textContent = str || '';
                 return d.innerHTML;
+            }
+
+            function formatDuration(seconds) {
+                const m = Math.floor(seconds / 60);
+                const s = Math.floor(seconds % 60);
+                return m + ':' + s.toString().padStart(2, '0');
             }
 
             async function loadCharacters() {
@@ -419,7 +204,7 @@
             }
 
             function renderLocations() {
-                $locationList.innerHTML = LOCATIONS.map(loc => {
+                $('location-list').innerHTML = LOCATIONS.map(loc => {
                     const count = (currentLocation === loc.id && currentCharacterId) ? 1 : 0;
                     const isFull = count >= loc.capacity;
                     return `<div class="location-card${currentLocation===loc.id?' active':''}" data-loc="${loc.id}">
@@ -431,7 +216,7 @@
             function enterLocation(locId) {
                 currentLocation = locId;
                 const loc = LOCATIONS.find(l => l.id === locId);
-                $chatTitle.textContent = `${loc.icon} ${loc.name}`;
+                $('chat-title').textContent = `${loc.icon} ${loc.name}`;
                 renderLocations();
                 loadMessages();
                 updateUI();
@@ -446,129 +231,219 @@
 
             function renderMessages(msgs) {
                 if (!msgs.length) {
-                    $messages.innerHTML = '<div class="message system">Silence. Speak in English.</div>';
+                    $('messages').innerHTML = '<div class="message system">Silence. Speak in English.</div>';
                     return;
                 }
-                $messages.innerHTML = msgs.map(m => {
+                $('messages').innerHTML = msgs.map(m => {
                     if (m.type === 'system') return `<div class="message system">${esc(m.text)}</div>`;
                     const isOwn = m.char_id === currentCharacterId;
-                    let content = m.audio_url ?
-                        `<div class="audio-msg" data-audio="${m.audio_url}">🔊 Voice ▶</div>` :
-                        `<div>${esc(m.text)}</div>`;
+                    let content;
+                    if (m.audio_url) {
+                        const dur = m.duration || 0;
+                        content = `<div class="voice-msg" data-audio="${m.audio_url}" data-duration="${dur}">
+                  <span class="play-icon">▶</span>
+                  <span class="duration">${formatDuration(dur)}</span>
+                  <div class="progress-bar"><div class="progress-fill"></div></div>
+                </div>`;
+                    } else {
+                        content = `<div>${esc(m.text)}</div>`;
+                    }
                     return `<div class="message ${isOwn?'own':'other'}"><div class="sender">${esc(m.char_name)}</div>${content}${isOwn?'':`<button class="report-btn" data-char="${m.char_id}" data-msg="${m.id}">!</button>`}</div>`;
                 }).join('');
-                $messages.scrollTop = $messages.scrollHeight;
+                $('messages').scrollTop = $('messages').scrollHeight;
+            }
+
+            function addMessageToChat(m) {
+                const isOwn = m.char_id === currentCharacterId;
+                let content;
+                if (m.audio_url) {
+                    const dur = m.duration || 0;
+                    content = `<div class="voice-msg" data-audio="${m.audio_url}" data-duration="${dur}">
+                <span class="play-icon">▶</span>
+                <span class="duration">${formatDuration(dur)}</span>
+                <div class="progress-bar"><div class="progress-fill"></div></div>
+              </div>`;
+                } else {
+                    content = `<div>${esc(m.text)}</div>`;
+                }
+                $('messages').insertAdjacentHTML('beforeend',
+                    `<div class="message ${isOwn?'own':'other'}"><div class="sender">${esc(m.char_name)}</div>${content}${isOwn?'':`<button class="report-btn" data-char="${m.char_id}" data-msg="${m.id}">!</button>`}</div>`
+                    );
+                $('messages').scrollTop = $('messages').scrollHeight;
             }
 
             function subscribeAll() {
                 db.channel('public:messages').on('postgres_changes', { event: 'INSERT', schema: 'public',
                     table: 'messages' }, payload => {
-                    if (payload.new.location_id === currentLocation) {
-                        const m = payload.new;
-                        const isOwn = m.char_id === currentCharacterId;
-                        let content = m.audio_url ?
-                            `<div class="audio-msg" data-audio="${m.audio_url}">🔊 Voice ▶</div>` :
-                            `<div>${esc(m.text)}</div>`;
-                        $messages.insertAdjacentHTML('beforeend',
-                            `<div class="message ${isOwn?'own':'other'}"><div class="sender">${esc(m.char_name)}</div>${content}${isOwn?'':`<button class="report-btn" data-char="${m.char_id}" data-msg="${m.id}">!</button>`}</div>`
-                            );
-                        $messages.scrollTop = $messages.scrollHeight;
+                    if (payload.new.location_id === currentLocation && payload.new.type !== 'system') {
+                        addMessageToChat(payload.new);
                     }
                 }).subscribe();
-                db.channel('public:reports').on('postgres_changes', { event: '*', schema: 'public',
-                    table: 'reports' }, updateGuidePanel).subscribe();
-                db.channel('public:graveyard').on('postgres_changes', { event: '*', schema: 'public',
-                    table: 'graveyard' }, updateGraveyard).subscribe();
             }
 
             async function sendMessage() {
                 if (!currentLocation || !currentCharacterId) return;
-                const text = $chatInput.value.trim();
+                const text = $('chat-input').value.trim();
                 if (!text) return;
                 if (/[\u4e00-\u9fff]/.test(text)) { alert('English only!'); return; }
                 const char = currentCharacters.find(c => c.id === currentCharacterId);
                 await db.from('messages').insert({ location_id: currentLocation, char_id: currentCharacterId,
-                    char_name: char.name, text });
-                $chatInput.value = '';
+                    char_name: char.name, text, type: 'chat' });
+                $('chat-input').value = '';
             }
 
             async function startRecording() {
-                if (!currentLocation || !currentCharacterId) return;
+                if (!currentLocation || !currentCharacterId) {
+                    alert('Enter a location and select a character first.');
+                    return;
+                }
+                if (isRecording) return;
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
                     audioChunks = [];
-                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    recordingStartTime = Date.now();
+
+                    mediaRecorder.ondataavailable = (e) => {
+                        if (e.data.size > 0) audioChunks.push(e.data);
+                    };
+
                     mediaRecorder.onstop = async () => {
                         stream.getTracks().forEach(t => t.stop());
+                        clearInterval(recordingTimer);
+                        recordingDuration = (Date.now() - recordingStartTime) / 1000;
+
+                        // 显示取消按钮
+                        $('cancel-voice-btn').style.display = 'none';
+
+                        if (audioChunks.length === 0) {
+                            $('voice-btn').classList.remove('recording');
+                            $('voice-btn').textContent = '🎤';
+                            isRecording = false;
+                            return;
+                        }
+
                         const blob = new Blob(audioChunks, { type: 'audio/webm' });
                         const char = currentCharacters.find(c => c.id === currentCharacterId);
                         const path = 'voice_' + Date.now() + '.webm';
-                        await db.storage.from('voice_messages').upload(path, blob);
-                        const { data } = db.storage.from('voice_messages').getPublicUrl(path);
-                        await db.from('messages').insert({ location_id: currentLocation,
-                            char_id: currentCharacterId, char_name: char.name, audio_url: data
-                                .publicUrl });
+
+                        const { error: uploadError } = await db.storage.from('voice_messages').upload(path,
+                            blob, {
+                                contentType: 'audio/webm',
+                                cacheControl: '3600'
+                            });
+
+                        if (uploadError) {
+                            console.error('Upload error:', uploadError);
+                            alert('Voice upload failed. Please try again.');
+                            $('voice-btn').classList.remove('recording');
+                            $('voice-btn').textContent = '🎤';
+                            isRecording = false;
+                            return;
+                        }
+
+                        const { data: urlData } = db.storage.from('voice_messages').getPublicUrl(path);
+
+                        await db.from('messages').insert({
+                            location_id: currentLocation,
+                            char_id: currentCharacterId,
+                            char_name: char.name,
+                            audio_url: urlData.publicUrl,
+                            type: 'chat',
+                            duration: Math.round(recordingDuration)
+                        });
+
+                        $('voice-btn').classList.remove('recording');
+                        $('voice-btn').textContent = '🎤';
+                        isRecording = false;
                     };
-                    mediaRecorder.start();
+
+                    // 每100ms收集数据，确保有内容
+                    mediaRecorder.start(100);
                     isRecording = true;
-                    $voiceBtn.classList.add('recording');
-                    $voiceBtn.textContent = '🔴';
+                    $('voice-btn').classList.add('recording');
+                    $('voice-btn').textContent = '🔴';
+                    $('cancel-voice-btn').style.display = 'inline-block';
+
+                    // 更新录音时长显示
+                    recordingTimer = setInterval(() => {
+                        const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+                        $('voice-btn').textContent = '🔴 ' + elapsed + 's';
+                    }, 500);
+
                 } catch (e) {
-                    alert('Microphone access needed.');
+                    console.error('Mic error:', e);
+                    alert('Microphone access needed. Please allow in browser settings.');
                 }
             }
 
             function stopRecording() {
-                if (mediaRecorder && isRecording) {
+                if (mediaRecorder && isRecording && mediaRecorder.state === 'recording') {
                     mediaRecorder.stop();
-                    $voiceBtn.classList.remove('recording');
-                    $voiceBtn.textContent = '🎤';
-                    isRecording = false;
+                }
+            }
+
+            function cancelRecording() {
+                if (mediaRecorder && isRecording) {
+                    // 标记取消，清空数据
+                    audioChunks = [];
+                    mediaRecorder.onstop = () => {
+                        // 停止所有track
+                        if (mediaRecorder.stream) {
+                            mediaRecorder.stream.getTracks().forEach(t => t.stop());
+                        }
+                        clearInterval(recordingTimer);
+                        $('voice-btn').classList.remove('recording');
+                        $('voice-btn').textContent = '🎤';
+                        $('cancel-voice-btn').style.display = 'none';
+                        isRecording = false;
+                    };
+                    mediaRecorder.stop();
                 }
             }
 
             function updateUI() {
                 updateSpeakAsList();
                 const char = currentCharacters.find(c => c.id === currentCharacterId);
-                $roleDisplay.textContent = char ? '👤 ' + char.name : '👤 Not in character';
+                $('current-role-display').textContent = char ? '👤 ' + char.name : '👤 Not in character';
                 const active = !!(currentCharacterId && currentLocation);
-                $chatInput.disabled = !active;
-                $sendBtn.disabled = !active;
-                $voiceBtn.disabled = !active;
+                $('chat-input').disabled = !active;
+                $('send-btn').disabled = !active;
+                $('voice-btn').disabled = !active;
+                $('cancel-voice-btn').style.display = 'none';
             }
 
             function updateSpeakAsList() {
-                $speakAs.innerHTML = '<option value="">-- Speak as... --</option>' + currentCharacters.map(c =>
+                $('speak-as').innerHTML = '<option value="">-- Speak as... --</option>' + currentCharacters.map(c =>
                     `<option value="${c.id}" ${c.id===currentCharacterId?'selected':''}>${esc(c.name)}</option>`).join(
                     '');
             }
 
             async function updateGraveyard() {
                 const { data } = await db.from('graveyard').select('*').order('death_time', { ascending: false });
-                $graveCount.textContent = data ? data.length : 0;
-                if (!data || !data.length) { $tombstoneList.innerHTML =
+                $('grave-count').textContent = data ? data.length : 0;
+                if (!data || !data.length) { $('tombstone-list').innerHTML =
                     '<p>Empty... for now.</p>'; return; }
-                $tombstoneList.innerHTML = data.map(g => {
+                $('tombstone-list').innerHTML = data.map(g => {
                     const remaining = Math.max(0, 600 - Math.floor((Date.now() - new Date(g.death_time)
                         .getTime()) / 1000));
                     const canRevive = remaining <= 0;
-                    return `<div style="padding:4px 0;border-bottom:1px solid #333;display:flex;justify-content:space-between;">
+                    return `<div style="padding:4px 0;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;gap:6px;">
                 <span>🪦 ${esc(g.char_name)}</span>
-                <span>${canRevive ? '🌱' : Math.floor(remaining/60)+':'+(remaining%60).toString().padStart(2,'0')}</span>
-                ${canRevive?`<button data-revive="${g.char_id}" data-grave="${g.id}" style="background:green;color:#fff;border:none;padding:2px 6px;border-radius:3px;">Return</button>`:''}
+                <span style="font-size:0.7em;">${canRevive ? '🌱' : Math.floor(remaining/60)+':'+(remaining%60).toString().padStart(2,'0')}</span>
+                ${canRevive?`<button data-revive="${g.char_id}" data-grave="${g.id}" style="background:var(--success);color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:0.65em;">Return</button>`:''}
               </div>`;
                 }).join('');
             }
 
             async function updateGuidePanel() {
                 const { data } = await db.from('reports').select('*').eq('status', 'pending');
-                $reportCount.textContent = data ? data.length : 0;
-                if (!data || !data.length) { $reportList.innerHTML =
+                $('report-count').textContent = data ? data.length : 0;
+                if (!data || !data.length) { $('report-list').innerHTML =
                     '<p>No pending reports.</p>'; return; }
-                $reportList.innerHTML = data.map(r => `<div style="background:#111;padding:6px;margin-bottom:4px;border-radius:3px;">
-              <div><b>Reason:</b> ${esc(r.reason)}</div>
-              <div style="margin-top:4px;">
+                $('report-list').innerHTML = data.map(r => `<div style="background:#111;padding:6px;margin-bottom:4px;border-radius:3px;">
+              <div style="font-size:0.75em;"><b>Reason:</b> ${esc(r.reason)}</div>
+              <div style="margin-top:4px;display:flex;gap:4px;">
                 <button data-report="${r.id}" data-action="approve" class="btn small danger">💀 Execute</button>
                 <button data-report="${r.id}" data-action="reject" class="btn small">✅ Dismiss</button>
               </div></div>`).join('');
@@ -581,47 +456,99 @@
                 const age = parseInt($('char-age').value);
                 const reason = $('char-reason').value.trim();
                 if (!name || !identity || !job || !age || !reason) return alert('All fields required.');
+                if (/[\u4e00-\u9fff]/.test(name + identity + job + reason)) return alert('English only!');
                 const { data } = await db.from('characters').insert({ name, identity, job, age, reason,
                     alive: true }).select().single();
                 if (data) {
                     currentCharacterId = data.id;
                     localStorage.setItem('liars_world_current_char', data.id);
                     await loadCharacters();
-                    $modalChar.classList.add('hidden');
+                    $('modal-character').classList.add('hidden');
                     updateUI();
                     renderLocations();
                 }
             }
 
-            function openReportModal(charId, msgId) {
-                $('report-target-display').textContent = 'Reporting: ' + charId;
-                $modalReport.dataset.charId = charId;
-                $modalReport.dataset.msgId = msgId;
-                $modalReport.classList.remove('hidden');
-            }
+            // 语音播放引擎
+            let currentAudio = null;
+            let currentAudioMsg = null;
 
-            async function submitReport() {
-                await db.from('reports').insert({
-                    reported_char_id: $modalReport.dataset.charId,
-                    reporter_char_id: currentCharacterId,
-                    reason: $('report-reason').value,
-                    status: 'pending'
+            function playAudio(url, voiceMsgEl) {
+                // 停止之前的播放
+                if (currentAudio) {
+                    currentAudio.pause();
+                    if (currentAudioMsg) {
+                        currentAudioMsg.querySelector('.play-icon').textContent = '▶';
+                        currentAudioMsg.querySelector('.progress-fill').style.width = '0%';
+                    }
+                }
+                // 如果点的是同一个，就停止
+                if (currentAudioMsg === voiceMsgEl && currentAudio && !currentAudio.paused) {
+                    currentAudio.pause();
+                    voiceMsgEl.querySelector('.play-icon').textContent = '▶';
+                    return;
+                }
+                const audio = new Audio(url);
+                currentAudio = audio;
+                currentAudioMsg = voiceMsgEl;
+                const playIcon = voiceMsgEl.querySelector('.play-icon');
+                const progressFill = voiceMsgEl.querySelector('.progress-fill');
+                const durationEl = voiceMsgEl.querySelector('.duration');
+                const totalDur = parseFloat(voiceMsgEl.dataset.duration) || 0;
+
+                playIcon.textContent = '⏸';
+
+                audio.ontimeupdate = () => {
+                    if (audio.duration && totalDur > 0) {
+                        const pct = (audio.currentTime / totalDur) * 100;
+                        progressFill.style.width = Math.min(pct, 100) + '%';
+                    }
+                    if (durationEl && audio.duration && !totalDur) {
+                        durationEl.textContent = formatDuration(audio.currentTime);
+                    }
+                };
+
+                audio.onended = () => {
+                    playIcon.textContent = '▶';
+                    progressFill.style.width = '0%';
+                    currentAudio = null;
+                    currentAudioMsg = null;
+                };
+
+                audio.onerror = () => {
+                    playIcon.textContent = '⚠️';
+                    currentAudio = null;
+                    currentAudioMsg = null;
+                };
+
+                audio.play().catch(e => {
+                    console.error('Play failed:', e);
+                    playIcon.textContent = '▶';
                 });
-                $modalReport.classList.add('hidden');
             }
 
-            // 事件绑定
+            // 全局事件委托
             document.addEventListener('click', async (e) => {
                 const card = e.target.closest('.location-card');
                 if (card) { enterLocation(card.dataset.loc); return; }
-                if (e.target.classList.contains('audio-msg')) {
-                    new Audio(e.target.dataset.audio).play();
+
+                const voiceMsg = e.target.closest('.voice-msg');
+                if (voiceMsg) {
+                    playAudio(voiceMsg.dataset.audio, voiceMsg);
                     return;
                 }
+
                 if (e.target.classList.contains('report-btn')) {
-                    openReportModal(e.target.dataset.char, e.target.dataset.msg);
+                    const charId = e.target.dataset.char;
+                    const msgId = e.target.dataset.msg;
+                    $('report-target-display').textContent = 'Reporting: ' + charId;
+                    $('modal-report').dataset.charId = charId;
+                    $('modal-report').dataset.msgId = msgId;
+                    $('modal-report').classList.remove('hidden');
+                    $('report-reason').value = '';
                     return;
                 }
+
                 if (e.target.dataset.report && e.target.dataset.action) {
                     const { report, action } = e.target.dataset;
                     const { data: r } = await db.from('reports').select('*').eq('id', report).single();
@@ -630,8 +557,8 @@
                         await db.from('reports').update({ status: 'approved' }).eq('id', report);
                         await db.from('characters').update({ alive: false }).eq('id', r.reported_char_id);
                         const char = currentCharacters.find(c => c.id === r.reported_char_id);
-                        await db.from('graveyard').insert({ char_id: r.reported_char_id, char_name: char?.name ||
-                                'Unknown', reason: r.reason });
+                        await db.from('graveyard').insert({ char_id: r.reported_char_id, char_name: char
+                                ?.name || 'Unknown', reason: r.reason });
                         if (currentCharacterId === r.reported_char_id) { currentCharacterId = null;
                             updateUI(); }
                     } else {
@@ -642,34 +569,63 @@
                     updateGraveyard();
                     return;
                 }
+
                 if (e.target.dataset.revive) {
                     const { revive, grave } = e.target.dataset;
                     await db.from('graveyard').delete().eq('id', grave);
                     await db.from('characters').delete().eq('id', revive);
                     await loadCharacters();
                     updateGraveyard();
-                    $modalChar.classList.remove('hidden');
+                    $('modal-character').classList.remove('hidden');
                     return;
                 }
             });
 
-            $('btn-create-char').onclick = () => $modalChar.classList.remove('hidden');
-            $('btn-cancel-char').onclick = () => $modalChar.classList.add('hidden');
+            // 按钮事件
+            $('btn-create-char').onclick = () => {
+                $('char-name').value = '';
+                $('char-identity').value = '';
+                $('char-job').value = '';
+                $('char-age').value = '';
+                $('char-reason').value = '';
+                $('modal-character').classList.remove('hidden');
+            };
+            $('btn-cancel-char').onclick = () => $('modal-character').classList.add('hidden');
             $('btn-submit-char').onclick = submitCharacter;
-            $('btn-cancel-report').onclick = () => $modalReport.classList.add('hidden');
-            $('btn-submit-report').onclick = submitReport;
+            $('btn-cancel-report').onclick = () => $('modal-report').classList.add('hidden');
+            $('btn-submit-report').onclick = async () => {
+                const reason = $('report-reason').value.trim();
+                if (!reason) return alert('Explain the flaw.');
+                await db.from('reports').insert({
+                    reported_char_id: $('modal-report').dataset.charId,
+                    reporter_char_id: currentCharacterId,
+                    reason: reason,
+                    status: 'pending'
+                });
+                $('modal-report').classList.add('hidden');
+                updateGuidePanel();
+            };
             $('btn-graveyard').onclick = () => $('graveyard').classList.toggle('hidden');
             $('btn-guide').onclick = () => $('guide-panel').classList.toggle('hidden');
-            $sendBtn.onclick = sendMessage;
-            $chatInput.onkeydown = e => { if (e.key === 'Enter') sendMessage(); };
-            $voiceBtn.onmousedown = startRecording;
-            $voiceBtn.onmouseup = stopRecording;
-            $voiceBtn.onmouseleave = stopRecording;
-            $voiceBtn.ontouchstart = e => { e.preventDefault();
+            $('send-btn').onclick = sendMessage;
+            $('chat-input').onkeydown = e => { if (e.key === 'Enter') sendMessage(); };
+
+            // 语音按钮
+            $('voice-btn').onmousedown = (e) => { e.preventDefault();
                 startRecording(); };
-            $voiceBtn.ontouchend = e => { e.preventDefault();
+            $('voice-btn').onmouseup = (e) => { e.preventDefault();
                 stopRecording(); };
-            $speakAs.onchange = function() {
+            $('voice-btn').onmouseleave = (e) => { if (isRecording) stopRecording(); };
+            $('voice-btn').ontouchstart = (e) => { e.preventDefault();
+                startRecording(); };
+            $('voice-btn').ontouchend = (e) => { e.preventDefault();
+                stopRecording(); };
+
+            $('cancel-voice-btn').onclick = cancelRecording;
+            $('cancel-voice-btn').onmousedown = (e) => e.preventDefault();
+            $('cancel-voice-btn').ontouchstart = (e) => e.preventDefault();
+
+            $('speak-as').onchange = function() {
                 currentCharacterId = this.value || null;
                 if (currentCharacterId) localStorage.setItem('liars_world_current_char', currentCharacterId);
                 else localStorage.removeItem('liars_world_current_char');
@@ -679,11 +635,11 @@
             async function checkGraveyardTimers() {
                 const { data } = await db.from('graveyard').select('*').eq('revivable', false);
                 if (!data) return;
-                data.forEach(async g => {
+                for (const g of data) {
                     if ((Date.now() - new Date(g.death_time).getTime()) > 600000) {
                         await db.from('graveyard').update({ revivable: true }).eq('id', g.id);
                     }
-                });
+                }
             }
 
             // 启动
