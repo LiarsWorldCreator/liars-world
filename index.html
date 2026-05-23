@@ -20,124 +20,628 @@
             --input-bg: #1c2a3a;
             --recording: #cc3333;
         }
-        * { margin:0; padding:0; box-sizing:border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
-            font-family:'Georgia',serif; background:var(--bg); color:var(--text);
-            min-height:100vh; -webkit-tap-highlight-color:transparent;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
         }
         #top-bar {
-            background:var(--panel); border-bottom:1px solid var(--border);
-            padding:8px 12px; display:flex; justify-content:space-between;
-            align-items:center; flex-wrap:wrap; gap:6px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        #top-bar h1 { font-size:1.1em; letter-spacing:2px; color:var(--gold); }
-        #user-area { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-        #current-role-display { background:var(--highlight); padding:4px 10px; border-radius:4px; font-size:0.75em; }
+        #top-bar h1 {
+            font-size: 1.1em;
+            letter-spacing: 2px;
+            color: var(--gold);
+            cursor: pointer;
+        }
+        #user-area {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        #current-role-display {
+            background: var(--highlight);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+        #current-role-display img {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #333;
+        }
         .btn {
-            background:var(--border); color:var(--text); border:1px solid var(--gold);
-            padding:6px 12px; cursor:pointer; font-family:inherit; font-size:0.75em;
-            border-radius:3px; transition:all 0.2s;
+            background: var(--border);
+            color: var(--text);
+            border: 1px solid var(--gold);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.75em;
+            border-radius: 3px;
+            transition: all 0.2s;
+            white-space: nowrap;
         }
-        .btn.danger { border-color:var(--danger); }
-        .btn.small { padding:4px 8px; font-size:0.65em; }
-        .btn.recording { background:var(--recording); border-color:#ff4444; animation:pulse 0.8s infinite; color:#fff; }
-        @keyframes pulse { 0%,100%{ box-shadow:0 0 0 0 rgba(204,51,51,0.5); } 50%{ box-shadow:0 0 0 12px rgba(204,51,51,0); } }
-        #main-container { display:flex; height:calc(100vh - 60px); }
-        #sidebar { width:280px; background:var(--panel); padding:10px; overflow-y:auto; flex-shrink:0; }
-        #sidebar h2 { font-size:0.8em; color:var(--gold); margin-bottom:10px; }
+        .btn:hover {
+            background: var(--highlight);
+            border-color: #e0c080;
+            color: #fff;
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+        .btn.danger {
+            border-color: var(--danger);
+        }
+        .btn.danger:hover {
+            background: var(--danger);
+        }
+        .btn.small {
+            padding: 4px 8px;
+            font-size: 0.65em;
+        }
+        .btn.recording {
+            background: var(--recording);
+            border-color: #ff4444;
+            animation: pulse 0.8s infinite;
+            color: #fff;
+        }
+        @keyframes pulse {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(204, 51, 51, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 0 12px rgba(204, 51, 51, 0);
+            }
+        }
+        .badge {
+            background: var(--danger);
+            color: #fff;
+            border-radius: 10px;
+            padding: 2px 6px;
+            font-size: 0.6em;
+            min-width: 16px;
+            text-align: center;
+        }
+        #main-container {
+            display: flex;
+            height: calc(100vh - 56px);
+        }
+        #sidebar {
+            width: 280px;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            padding: 10px;
+            overflow-y: auto;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        #sidebar h2 {
+            font-size: 0.8em;
+            color: var(--gold);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        #daily-task-box {
+            background: var(--chat-bg);
+            border: 1px solid var(--gold);
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.7em;
+        }
+        #daily-task-box h4 {
+            color: var(--gold);
+            margin-bottom: 4px;
+            font-size: 0.8em;
+        }
         .location-card {
-            background:var(--chat-bg); border:1px solid var(--border);
-            padding:10px; margin-bottom:6px; cursor:pointer; border-radius:4px;
+            background: var(--chat-bg);
+            border: 1px solid var(--border);
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 0.85em;
         }
-        .location-card.active { border-color:var(--gold); background:#121e32; }
-        .location-card .name { font-size:0.9em; }
-        .location-card .capacity { font-size:0.65em; color:var(--text-dark); }
-        .location-card .capacity.full { color:var(--danger); }
-        #chat-area { flex:1; display:flex; flex-direction:column; background:var(--chat-bg); }
-        #chat-header { background:var(--panel); padding:10px; border-bottom:1px solid var(--border); }
-        #chat-header h3 { color:var(--gold); font-size:0.9em; }
-        #messages { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:6px; }
-        .message { max-width:80%; padding:8px 12px; border-radius:6px; font-size:0.85em; position:relative; }
-        .message .sender { font-size:0.65em; color:var(--gold); font-weight:bold; margin-bottom:2px; }
-        .message.own { align-self:flex-end; background:#1a3a5c; }
-        .message.other { align-self:flex-start; background:#1a1a2e; border:1px solid var(--border); }
-        .message.system { align-self:center; color:var(--text-dark); font-style:italic; font-size:0.75em; text-align:center; }
+        .location-card:hover {
+            border-color: var(--gold);
+        }
+        .location-card.active {
+            border-color: var(--gold);
+            background: #121e32;
+            box-shadow: 0 0 12px rgba(201, 169, 110, 0.2);
+        }
+        .location-card .capacity {
+            font-size: 0.65em;
+            color: var(--text-dark);
+        }
+        .location-card .capacity.full {
+            color: var(--danger);
+        }
+        .location-card .rules {
+            font-size: 0.6em;
+            color: var(--text-dark);
+            font-style: italic;
+            margin-top: 2px;
+        }
+        #chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--chat-bg);
+        }
+        #chat-header {
+            background: var(--panel);
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #chat-header h3 {
+            color: var(--gold);
+            font-size: 0.9em;
+        }
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .message {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            position: relative;
+            word-break: break-word;
+            animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .message .sender {
+            font-size: 0.65em;
+            color: var(--gold);
+            font-weight: bold;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .message .sender img {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+        }
+        .message.own {
+            align-self: flex-end;
+            background: #1a3a5c;
+            border: 1px solid #2a5070;
+        }
+        .message.other {
+            align-self: flex-start;
+            background: #1a1a2e;
+            border: 1px solid var(--border);
+        }
+        .message.system {
+            align-self: center;
+            color: var(--text-dark);
+            font-style: italic;
+            font-size: 0.75em;
+            text-align: center;
+            max-width: 95%;
+        }
         .report-btn {
-            position:absolute; top:-8px; right:-8px; background:var(--danger);
-            color:#fff; width:22px; height:22px; border-radius:50%;
-            cursor:pointer; font-size:10px; display:none; border:none;
-            align-items:center; justify-content:center;
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger);
+            color: #fff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 11px;
+            display: none;
+            border: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
         }
-        .message.other:hover .report-btn { display:inline-flex; }
+        .message.other:hover .report-btn,
+        .message.other:active .report-btn {
+            display: inline-flex;
+        }
         .voice-msg {
-            display:inline-flex; align-items:center; gap:8px;
-            background:#1a3050; padding:6px 12px; border-radius:20px;
-            cursor:pointer; font-size:0.8em; user-select:none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #1a3050;
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.8em;
+            user-select: none;
         }
-        .voice-msg .play-icon { font-size:1.2em; }
-        .voice-msg .duration { font-size:0.7em; color:var(--text-dark); }
+        .voice-msg .play-icon {
+            font-size: 1.1em;
+        }
+        .voice-msg .duration {
+            font-size: 0.7em;
+            color: var(--text-dark);
+        }
         .voice-msg .progress-bar {
-            width:60px; height:3px; background:#333; border-radius:2px; overflow:hidden;
+            width: 50px;
+            height: 3px;
+            background: #333;
+            border-radius: 2px;
+            overflow: hidden;
         }
-        .voice-msg .progress-fill { height:100%; background:var(--gold); width:0%; transition:width 0.1s linear; }
-        #input-area { padding:10px; background:var(--panel); display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
-        #input-area input { flex:1; min-width:100px; background:var(--input-bg); color:var(--text); border:1px solid var(--border); padding:8px; border-radius:3px; font-family:inherit; }
-        #input-area select { background:var(--input-bg); color:var(--text); border:1px solid var(--border); padding:8px; border-radius:3px; font-family:inherit; }
-        #voice-btn { font-size:1.2em; padding:8px 14px; min-width:44px; }
-        #cancel-voice-btn { display:none; background:var(--danger); color:#fff; border:none; padding:6px 10px; border-radius:3px; cursor:pointer; font-size:0.7em; }
-        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:200; display:flex; align-items:center; justify-content:center; }
-        .modal { background:var(--panel); border:1px solid var(--gold); padding:20px; width:92%; max-width:500px; border-radius:6px; max-height:85vh; overflow-y:auto; }
-        .modal h2 { color:var(--gold); margin-bottom:10px; font-size:1em; }
-        .modal label { display:block; color:var(--text-dark); font-size:0.7em; margin-top:8px; text-transform:uppercase; }
-        .modal input,.modal textarea { width:100%; background:var(--input-bg); color:var(--text); border:1px solid var(--border); padding:8px; margin-top:4px; border-radius:3px; font-family:inherit; }
-        .modal textarea { min-height:60px; resize:vertical; }
-        .modal .btn-row { display:flex; gap:8px; margin-top:12px; justify-content:flex-end; }
-        .hidden { display:none !important; }
-        #graveyard,#guide-panel { position:fixed; bottom:10px; background:var(--panel); padding:10px; border-radius:6px; z-index:150; font-size:0.8em; max-width:300px; }
-        #graveyard { right:10px; border:1px solid #3a2a1a; }
-        #guide-panel { left:10px; border:1px solid var(--gold); }
-        @media (max-width:768px) {
-            #main-container { flex-direction:column; }
-            #sidebar { width:100%; max-height:160px; display:flex; gap:6px; overflow-x:auto; }
-            #sidebar h2 { display:none; }
-            .location-card { flex:0 0 auto; min-width:80px; text-align:center; margin-bottom:0; }
-            #chat-area { min-height:50vh; }
-            #graveyard,#guide-panel { position:static; margin:4px; max-width:none; }
+        .voice-msg .progress-fill {
+            height: 100%;
+            background: var(--gold);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        .voice-msg.playing {
+            background: #2a4060;
+        }
+        #input-area {
+            padding: 10px 12px;
+            background: var(--panel);
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        #input-area select {
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 0.8em;
+            max-width: 140px;
+        }
+        #input-area input {
+            flex: 1;
+            min-width: 100px;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 0.85em;
+        }
+        #voice-btn {
+            font-size: 1.2em;
+            padding: 8px 14px;
+            min-width: 44px;
+        }
+        #cancel-voice-btn {
+            display: none;
+            background: #555;
+            color: #fff;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.7em;
+        }
+        #recording-status {
+            display: none;
+            color: #ff6666;
+            font-size: 0.7em;
+            animation: pulse 0.8s infinite;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal {
+            background: var(--panel);
+            border: 1px solid var(--gold);
+            padding: 20px;
+            width: 92%;
+            max-width: 500px;
+            border-radius: 6px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .modal h2 {
+            color: var(--gold);
+            margin-bottom: 12px;
+            font-size: 1em;
+            letter-spacing: 1px;
+        }
+        .modal label {
+            display: block;
+            color: var(--text-dark);
+            font-size: 0.7em;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .modal input,
+        .modal textarea,
+        .modal select {
+            width: 100%;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 8px 10px;
+            margin-top: 4px;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 0.85em;
+        }
+        .modal textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+        .modal .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+        .hidden {
+            display: none !important;
+        }
+        #online-panel {
+            position: fixed;
+            top: 56px;
+            right: 10px;
+            background: var(--panel);
+            border: 1px solid var(--gold);
+            padding: 12px;
+            border-radius: 6px;
+            z-index: 150;
+            max-width: 240px;
+            max-height: 50vh;
+            overflow-y: auto;
+            font-size: 0.75em;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+        #online-panel h4 {
+            color: var(--gold);
+            margin-bottom: 8px;
+            font-size: 0.8em;
+            letter-spacing: 1px;
+        }
+        .online-player {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0;
+            border-bottom: 1px solid #1a1a2e;
+            font-size: 0.8em;
+        }
+        .online-player img {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+        }
+        .online-player .loc {
+            font-size: 0.65em;
+            color: var(--text-dark);
+        }
+        #graveyard,
+        #guide-panel {
+            position: fixed;
+            bottom: 10px;
+            background: var(--panel);
+            padding: 10px;
+            border-radius: 6px;
+            z-index: 150;
+            font-size: 0.75em;
+            max-width: 300px;
+            max-height: 40vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+        #graveyard {
+            right: 10px;
+            border: 1px solid #3a2a1a;
+        }
+        #guide-panel {
+            left: 10px;
+            border: 1px solid var(--gold);
+        }
+        #admin-panel {
+            position: fixed;
+            top: 56px;
+            left: 10px;
+            background: var(--panel);
+            border: 1px solid var(--gold);
+            padding: 14px;
+            border-radius: 6px;
+            z-index: 160;
+            width: 300px;
+            max-height: 70vh;
+            overflow-y: auto;
+            font-size: 0.75em;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+        #admin-panel h4 {
+            color: var(--gold);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+        .feedback-banner {
+            position: fixed;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--panel);
+            border: 1px solid var(--gold);
+            padding: 10px 20px;
+            border-radius: 6px;
+            z-index: 300;
+            font-size: 0.8em;
+            animation: fadeIn 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+        @media (max-width: 768px) {
+            #main-container {
+                flex-direction: column;
+            }
+            #sidebar {
+                width: 100%;
+                max-height: 180px;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 4px;
+                overflow-x: auto;
+            }
+            #sidebar h2 {
+                display: none;
+            }
+            #daily-task-box {
+                flex: 0 0 auto;
+                min-width: 120px;
+                font-size: 0.6em;
+            }
+            .location-card {
+                flex: 0 0 auto;
+                min-width: 80px;
+                text-align: center;
+                font-size: 0.7em;
+            }
+            #chat-area {
+                min-height: 50vh;
+            }
+            #online-panel {
+                top: auto;
+                bottom: 50px;
+                right: 4px;
+                max-width: 180px;
+                font-size: 0.65em;
+            }
+            #graveyard,
+            #guide-panel,
+            #admin-panel {
+                position: static;
+                margin: 4px;
+                max-width: none;
+            }
         }
     </style>
 </head>
 <body>
     <div id="top-bar">
-        <h1>Liar's World</h1>
+        <h1 onclick="location.reload()">Liar's World</h1>
         <div id="user-area">
-            <span id="current-role-display">👤 Not in character</span>
+            <span id="current-role-display" onclick="showCharacterCard()">👤 Not in character</span>
             <button class="btn small" id="btn-create-char">+ New</button>
+            <button class="btn small" id="btn-online">👥 <span id="online-count">0</span></button>
             <button class="btn small danger" id="btn-graveyard">🪦 <span id="grave-count">0</span></button>
             <button class="btn small" id="btn-guide">⚖️ <span id="report-count">0</span></button>
+            <button class="btn small" id="btn-admin">🔑 Admin</button>
         </div>
     </div>
     <div id="main-container">
         <div id="sidebar">
             <h2>📍 Village</h2>
-            <div id="location-list" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+            <div id="daily-task-box"><h4>📋 Today's Task</h4><p id="daily-task-text">Loading...</p></div>
+            <div id="location-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
         </div>
         <div id="chat-area">
-            <div id="chat-header"><h3 id="chat-title">Select a location</h3></div>
-            <div id="messages"><div class="message system">Welcome to Liar's World.</div></div>
+            <div id="chat-header"><h3 id="chat-title">Select a location</h3><span id="scene-rules" style="font-size:0.65em;color:var(--text-dark);"></span></div>
+            <div id="messages"><div class="message system">Welcome to <span style="color:var(--gold);">Liar's World</span>. Create a character to begin.</div></div>
             <div id="input-area">
                 <select id="speak-as"><option value="">-- Speak as... --</option></select>
                 <input type="text" id="chat-input" placeholder="English only..." disabled>
                 <button class="btn" id="voice-btn" disabled>🎤</button>
-                <button class="btn" id="cancel-voice-btn">✕ Cancel</button>
+                <button class="btn" id="cancel-voice-btn">✕</button>
+                <span id="recording-status">🔴 Recording...</span>
                 <button class="btn" id="send-btn" disabled>Send</button>
             </div>
         </div>
     </div>
+    <div id="online-panel" class="hidden"><h4>👥 Online Now</h4><div id="online-list"></div></div>
     <div id="graveyard" class="hidden"><h4>🪦 Graveyard</h4><div id="tombstone-list"></div></div>
     <div id="guide-panel" class="hidden"><h4>⚖️ Reports</h4><div id="report-list"></div></div>
+    <div id="admin-panel" class="hidden">
+        <h4>🔑 Admin Panel</h4>
+        <div id="admin-login">
+            <label>Password</label><input type="password" id="admin-password" placeholder="Enter admin password...">
+            <button class="btn" id="btn-admin-login" style="margin-top:6px;">Login</button>
+        </div>
+        <div id="admin-content" class="hidden">
+            <label>Set Daily Task</label>
+            <select id="admin-task-location"><option value="all">All Locations</option></select>
+            <textarea id="admin-task-text" placeholder="Today's task description..."></textarea>
+            <button class="btn" id="btn-set-task" style="margin-top:4px;">Publish Task</button>
+            <hr style="border-color:var(--border);margin:8px 0;">
+            <label>Force Execute Player</label>
+            <select id="admin-force-execute"></select>
+            <button class="btn danger" id="btn-force-execute" style="margin-top:4px;">💀 Execute</button>
+            <hr style="border-color:var(--border);margin:8px 0;">
+            <label>Delete Voice Message (enter message ID)</label>
+            <input type="text" id="admin-delete-voice" placeholder="Message UUID...">
+            <button class="btn danger" id="btn-delete-voice" style="margin-top:4px;">🗑️ Delete</button>
+            <button class="btn" id="btn-admin-logout" style="margin-top:8px;">Logout</button>
+        </div>
+    </div>
     <div id="modal-character" class="modal-overlay hidden">
         <div class="modal">
             <h2>Create Your Lie</h2>
+            <label>Avatar</label>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:4px;">
+                <img id="avatar-preview" src="" style="width:50px;height:50px;border-radius:50%;background:#333;">
+                <button class="btn small" id="btn-random-avatar">🎲 Random</button>
+                <input type="text" id="char-avatar-seed" placeholder="Seed word..." style="flex:1;">
+            </div>
             <label>Name</label><input type="text" id="char-name" placeholder="e.g. Elias Thornwood">
             <label>Identity</label><input type="text" id="char-identity" placeholder="e.g. Wandering Merchant">
             <label>Occupation</label><input type="text" id="char-job" placeholder="e.g. Blacksmith">
@@ -148,10 +652,17 @@
     </div>
     <div id="modal-report" class="modal-overlay hidden">
         <div class="modal">
-            <h2>Report Flaw</h2>
-            <label>What's the contradiction?</label><textarea id="report-reason" placeholder="Explain..."></textarea>
-            <p id="report-target-display"></p>
-            <div class="btn-row"><button class="btn" id="btn-cancel-report">Cancel</button><button class="btn danger" id="btn-submit-report">Submit</button></div>
+            <h2>Report Logical Flaw</h2>
+            <label>What's the contradiction?</label><textarea id="report-reason" placeholder="Explain the logical flaw clearly..."></textarea>
+            <p id="report-target-display" style="font-size:0.75em;margin-top:6px;"></p>
+            <div class="btn-row"><button class="btn" id="btn-cancel-report">Cancel</button><button class="btn danger" id="btn-submit-report">Submit Report</button></div>
+        </div>
+    </div>
+    <div id="modal-character-card" class="modal-overlay hidden">
+        <div class="modal">
+            <h2>Character Card</h2>
+            <div id="character-card-content"></div>
+            <div class="btn-row"><button class="btn" id="btn-close-card">Close</button></div>
         </div>
     </div>
 
@@ -160,29 +671,37 @@
             const SUPABASE_URL = 'https://jhxvmwdrqwfakeaptbdt.supabase.co';
             const SUPABASE_ANON_KEY =
                 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeHZtd2RycXdmYWtlYXB0YmR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNzk0MzYsImV4cCI6MjA5NDc1NTQzNn0.NJ0zwaGze_YoKCG9etfsVk8ERZiVMkO-M0sMQpWhnRE';
+            const ADMIN_PASSWORD = 'liar2024'; // ⚠️ 改成你自己的密码
 
             const { createClient } = supabase;
             const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
             const LOCATIONS = [
-                { id: 'teahouse', name: 'Tea House', icon: '🍵', capacity: 8 },
-                { id: 'tavern', name: 'Tavern', icon: '🍺', capacity: 8 },
-                { id: 'restaurant', name: 'Restaurant', icon: '🍽️', capacity: 6 },
-                { id: 'casino', name: 'Casino', icon: '🎲', capacity: 6 },
-                { id: 'farm', name: 'Farm', icon: '🌾', capacity: 2 },
-                { id: 'dirtroad', name: 'Dirt Road', icon: '🛤️', capacity: 1 },
-                { id: 'chiefhouse', name: "Chief's House", icon: '🏛️', capacity: 3 },
+                { id: 'teahouse', name: 'Tea House', icon: '🍵', capacity: 8,
+                    rules: 'Speak softly. No raised voices.' },
+                { id: 'tavern', name: 'Tavern', icon: '🍺', capacity: 8,
+                    rules: 'Loud and rowdy. Exaggeration encouraged.' },
+                { id: 'restaurant', name: 'Restaurant', icon: '🍽️', capacity: 6,
+                    rules: 'Discuss food, travel, and the outside world.' },
+                { id: 'casino', name: 'Casino', icon: '🎲', capacity: 6, rules: 'Every statement is a gamble. Bluff.' },
+                { id: 'farm', name: 'Farm', icon: '🌾', capacity: 2, rules: 'Only two. No secrets here.' },
+                { id: 'dirtroad', name: 'Dirt Road', icon: '🛤️', capacity: 1,
+                rules: 'Solitude. Perfect for thinking — or escaping.' },
+                { id: 'chiefhouse', name: "Chief's House", icon: '🏛️', capacity: 3,
+                    rules: 'Only discussions about the meaning of life. The Chief is watching.' },
             ];
 
             let currentLocation = null;
             let currentCharacterId = null;
             let currentCharacters = [];
+            let isAdmin = false;
             let mediaRecorder = null;
             let audioChunks = [];
             let isRecording = false;
             let recordingStartTime = 0;
             let recordingTimer = null;
-            let recordingDuration = 0;
+            let currentAudio = null;
+            let currentAudioMsg = null;
 
             const $ = (id) => document.getElementById(id);
 
@@ -192,24 +711,98 @@
                 return d.innerHTML;
             }
 
-            function formatDuration(seconds) {
-                const m = Math.floor(seconds / 60);
-                const s = Math.floor(seconds % 60);
-                return m + ':' + s.toString().padStart(2, '0');
+            function formatDuration(s) {
+                const m = Math.floor(s / 60);
+                const sec = Math.floor(s % 60);
+                return m + ':' + sec.toString().padStart(2, '0');
             }
 
+            function getAvatarUrl(seed) {
+                return `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${encodeURIComponent(seed)}&backgroundColor=333333,555555,777777`;
+            }
+
+            function showBanner(msg, type = 'info') {
+                const b = document.createElement('div');
+                b.className = 'feedback-banner';
+                b.style.borderColor = type === 'danger' ? 'var(--danger)' : 'var(--gold)';
+                b.textContent = msg;
+                document.body.appendChild(b);
+                setTimeout(() => b.remove(), 3500);
+            }
+
+            // === 数据加载 ===
             async function loadCharacters() {
                 const { data } = await db.from('characters').select('*').eq('alive', true);
                 if (data) currentCharacters = data;
             }
 
+            async function loadDailyTask() {
+                const { data } = await db.from('daily_tasks').select('*').eq('active', true).order('created_at', {
+                    ascending: false }).limit(1);
+                if (data && data.length > 0) {
+                    const locName = data[0].location_id === 'all' ? 'All Locations' : (LOCATIONS.find(l => l.id ===
+                        data[0].location_id)?.name || data[0].location_id);
+                    $('daily-task-text').textContent = `[${locName}] ${data[0].task_text}`;
+                } else {
+                    $('daily-task-text').textContent = 'No task today. Explore freely.';
+                }
+            }
+
+            // === 在线状态 ===
+            async function updateOnlineStatus() {
+                if (!currentCharacterId) return;
+                const char = currentCharacters.find(c => c.id === currentCharacterId);
+                if (!char) return;
+                const { data: existing } = await db.from('online_players').select('*').eq('char_id',
+                    currentCharacterId);
+                if (existing && existing.length > 0) {
+                    await db.from('online_players').update({ location_id: currentLocation, last_seen: new Date() }).eq(
+                        'char_id', currentCharacterId);
+                } else {
+                    await db.from('online_players').insert({
+                        char_id: currentCharacterId,
+                        char_name: char.name,
+                        avatar_url: char.avatar_url,
+                        location_id: currentLocation,
+                        last_seen: new Date()
+                    });
+                }
+                loadOnlinePlayers();
+            }
+
+            async function loadOnlinePlayers() {
+                const { data } = await db.from('online_players').select('*').order('last_seen', { ascending: false });
+                const players = data || [];
+                $('online-count').textContent = players.length;
+                $('online-list').innerHTML = players.map(p => {
+                    const loc = LOCATIONS.find(l => l.id === p.location_id);
+                    return `<div class="online-player">
+                <img src="${p.avatar_url || getAvatarUrl(p.char_name)}" onerror="this.src='${getAvatarUrl('fallback')}'">
+                <span>${esc(p.char_name)}</span>
+                <span class="loc">@ ${loc ? loc.icon : '?'} ${loc ? loc.name : 'Unknown'}</span>
+              </div>`;
+                }).join('');
+            }
+
+            // 定期清理离线玩家（超过2分钟未更新）
+            async function cleanupOnlinePlayers() {
+                const cutoff = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+                await db.from('online_players').delete().lt('last_seen', cutoff);
+            }
+
+            setInterval(cleanupOnlinePlayers, 60000);
+            if (currentCharacterId) setInterval(updateOnlineStatus, 30000);
+
+            // === 渲染 ===
             function renderLocations() {
                 $('location-list').innerHTML = LOCATIONS.map(loc => {
                     const count = (currentLocation === loc.id && currentCharacterId) ? 1 : 0;
                     const isFull = count >= loc.capacity;
                     return `<div class="location-card${currentLocation===loc.id?' active':''}" data-loc="${loc.id}">
-                <span>${loc.icon}</span> <span class="name">${loc.name}</span>
-                <span class="capacity${isFull?' full':''}">${count}/${loc.capacity}</span></div>`;
+                <div>${loc.icon} <strong>${loc.name}</strong></div>
+                <div class="capacity${isFull?' full':''}">${count}/${loc.capacity}</div>
+                <div class="rules">${loc.rules}</div>
+              </div>`;
                 }).join('');
             }
 
@@ -217,9 +810,11 @@
                 currentLocation = locId;
                 const loc = LOCATIONS.find(l => l.id === locId);
                 $('chat-title').textContent = `${loc.icon} ${loc.name}`;
+                $('scene-rules').textContent = loc.rules;
                 renderLocations();
                 loadMessages();
                 updateUI();
+                updateOnlineStatus();
             }
 
             async function loadMessages() {
@@ -237,10 +832,12 @@
                 $('messages').innerHTML = msgs.map(m => {
                     if (m.type === 'system') return `<div class="message system">${esc(m.text)}</div>`;
                     const isOwn = m.char_id === currentCharacterId;
+                    const char = currentCharacters.find(c => c.id === m.char_id);
+                    const avatar = char?.avatar_url || getAvatarUrl(m.char_name || 'unknown');
                     let content;
                     if (m.audio_url) {
                         const dur = m.duration || 0;
-                        content = `<div class="voice-msg" data-audio="${m.audio_url}" data-duration="${dur}">
+                        content = `<div class="voice-msg" data-audio="${m.audio_url}" data-duration="${dur}" data-msgid="${m.id}">
                   <span class="play-icon">▶</span>
                   <span class="duration">${formatDuration(dur)}</span>
                   <div class="progress-bar"><div class="progress-fill"></div></div>
@@ -248,27 +845,41 @@
                     } else {
                         content = `<div>${esc(m.text)}</div>`;
                     }
-                    return `<div class="message ${isOwn?'own':'other'}"><div class="sender">${esc(m.char_name)}</div>${content}${isOwn?'':`<button class="report-btn" data-char="${m.char_id}" data-msg="${m.id}">!</button>`}</div>`;
+                    return `<div class="message ${isOwn?'own':'other'}">
+                <div class="sender"><img src="${avatar}" onerror="this.src='${getAvatarUrl('fallback')}'"> ${esc(m.char_name || 'Ghost')}</div>
+                ${content}
+                ${isOwn?'':`<button class="report-btn" data-char="${m.char_id}" data-msg="${m.id}">!</button>`}
+              </div>`;
                 }).join('');
                 $('messages').scrollTop = $('messages').scrollHeight;
             }
 
             function addMessageToChat(m) {
-                const isOwn = m.char_id === currentCharacterId;
-                let content;
-                if (m.audio_url) {
-                    const dur = m.duration || 0;
-                    content = `<div class="voice-msg" data-audio="${m.audio_url}" data-duration="${dur}">
-                <span class="play-icon">▶</span>
-                <span class="duration">${formatDuration(dur)}</span>
-                <div class="progress-bar"><div class="progress-fill"></div></div>
-              </div>`;
+                if (m.type === 'system') {
+                    $('messages').insertAdjacentHTML('beforeend',
+                        `<div class="message system">${esc(m.text)}</div>`);
                 } else {
-                    content = `<div>${esc(m.text)}</div>`;
+                    const isOwn = m.char_id === currentCharacterId;
+                    const char = currentCharacters.find(c => c.id === m.char_id);
+                    const avatar = char?.avatar_url || getAvatarUrl(m.char_name || 'unknown');
+                    let content;
+                    if (m.audio_url) {
+                        const dur = m.duration || 0;
+                        content = `<div class="voice-msg" data-audio="${m.audio_url}" data-duration="${dur}" data-msgid="${m.id}">
+                  <span class="play-icon">▶</span>
+                  <span class="duration">${formatDuration(dur)}</span>
+                  <div class="progress-bar"><div class="progress-fill"></div></div>
+                </div>`;
+                    } else {
+                        content = `<div>${esc(m.text)}</div>`;
+                    }
+                    $('messages').insertAdjacentHTML('beforeend',
+                        `<div class="message ${isOwn?'own':'other'}">
+                  <div class="sender"><img src="${avatar}" onerror="this.src='${getAvatarUrl('fallback')}'"> ${esc(m.char_name || 'Ghost')}</div>
+                  ${content}
+                  ${isOwn?'':`<button class="report-btn" data-char="${m.char_id}" data-msg="${m.id}">!</button>`}
+                </div>`);
                 }
-                $('messages').insertAdjacentHTML('beforeend',
-                    `<div class="message ${isOwn?'own':'other'}"><div class="sender">${esc(m.char_name)}</div>${content}${isOwn?'':`<button class="report-btn" data-char="${m.char_id}" data-msg="${m.id}">!</button>`}</div>`
-                    );
                 $('messages').scrollTop = $('messages').scrollHeight;
             }
 
@@ -279,174 +890,164 @@
                         addMessageToChat(payload.new);
                     }
                 }).subscribe();
+                db.channel('public:reports').on('postgres_changes', { event: '*', schema: 'public',
+                    table: 'reports' }, updateGuidePanel).subscribe();
+                db.channel('public:graveyard').on('postgres_changes', { event: '*', schema: 'public',
+                    table: 'graveyard' }, updateGraveyard).subscribe();
+                db.channel('public:online').on('postgres_changes', { event: '*', schema: 'public',
+                    table: 'online_players' }, loadOnlinePlayers).subscribe();
+                db.channel('public:daily').on('postgres_changes', { event: '*', schema: 'public',
+                    table: 'daily_tasks' }, loadDailyTask).subscribe();
             }
 
+            // === 发送 ===
             async function sendMessage() {
                 if (!currentLocation || !currentCharacterId) return;
                 const text = $('chat-input').value.trim();
                 if (!text) return;
-                if (/[\u4e00-\u9fff]/.test(text)) { alert('English only!'); return; }
+                if (/[\u4e00-\u9fff]/.test(text)) { alert('⚠️ English only! The Chief demands it.'); return; }
                 const char = currentCharacters.find(c => c.id === currentCharacterId);
                 await db.from('messages').insert({ location_id: currentLocation, char_id: currentCharacterId,
                     char_name: char.name, text, type: 'chat' });
                 $('chat-input').value = '';
             }
 
+            // === 语音 ===
             async function startRecording() {
-                if (!currentLocation || !currentCharacterId) {
-                    alert('Enter a location and select a character first.');
-                    return;
-                }
+                if (!currentLocation || !currentCharacterId) { alert('Enter a location first.'); return; }
                 if (isRecording) return;
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm;codecs=opus' });
                     audioChunks = [];
                     recordingStartTime = Date.now();
-
-                    mediaRecorder.ondataavailable = (e) => {
-                        if (e.data.size > 0) audioChunks.push(e.data);
-                    };
-
+                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
                     mediaRecorder.onstop = async () => {
                         stream.getTracks().forEach(t => t.stop());
                         clearInterval(recordingTimer);
-                        recordingDuration = (Date.now() - recordingStartTime) / 1000;
-
-                        // 显示取消按钮
+                        const duration = (Date.now() - recordingStartTime) / 1000;
                         $('cancel-voice-btn').style.display = 'none';
-
-                        if (audioChunks.length === 0) {
-                            $('voice-btn').classList.remove('recording');
-                            $('voice-btn').textContent = '🎤';
-                            isRecording = false;
-                            return;
-                        }
-
+                        $('recording-status').style.display = 'none';
+                        if (audioChunks.length === 0) { resetVoiceBtn(); return; }
                         const blob = new Blob(audioChunks, { type: 'audio/webm' });
                         const char = currentCharacters.find(c => c.id === currentCharacterId);
                         const path = 'voice_' + Date.now() + '.webm';
-
-                        const { error: uploadError } = await db.storage.from('voice_messages').upload(path,
-                            blob, {
-                                contentType: 'audio/webm',
-                                cacheControl: '3600'
-                            });
-
-                        if (uploadError) {
-                            console.error('Upload error:', uploadError);
-                            alert('Voice upload failed. Please try again.');
-                            $('voice-btn').classList.remove('recording');
-                            $('voice-btn').textContent = '🎤';
-                            isRecording = false;
-                            return;
-                        }
-
+                        const { error: uploadError } = await db.storage.from('voice_messages').upload(path, blob, {
+                            contentType: 'audio/webm',
+                            cacheControl: '3600'
+                        });
+                        if (uploadError) { alert('Upload failed.'); resetVoiceBtn(); return; }
                         const { data: urlData } = db.storage.from('voice_messages').getPublicUrl(path);
-
                         await db.from('messages').insert({
                             location_id: currentLocation,
                             char_id: currentCharacterId,
                             char_name: char.name,
                             audio_url: urlData.publicUrl,
                             type: 'chat',
-                            duration: Math.round(recordingDuration)
+                            duration: Math.round(duration)
                         });
-
-                        $('voice-btn').classList.remove('recording');
-                        $('voice-btn').textContent = '🎤';
-                        isRecording = false;
+                        resetVoiceBtn();
                     };
-
-                    // 每100ms收集数据，确保有内容
                     mediaRecorder.start(100);
                     isRecording = true;
                     $('voice-btn').classList.add('recording');
                     $('voice-btn').textContent = '🔴';
                     $('cancel-voice-btn').style.display = 'inline-block';
-
-                    // 更新录音时长显示
+                    $('recording-status').style.display = 'inline';
                     recordingTimer = setInterval(() => {
-                        const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
-                        $('voice-btn').textContent = '🔴 ' + elapsed + 's';
+                        $('recording-status').textContent = '🔴 ' + Math.floor((Date.now() -
+                            recordingStartTime) / 1000) + 's';
                     }, 500);
-
-                } catch (e) {
-                    console.error('Mic error:', e);
-                    alert('Microphone access needed. Please allow in browser settings.');
-                }
+                } catch (e) { alert('Microphone access needed.'); }
             }
 
             function stopRecording() {
-                if (mediaRecorder && isRecording && mediaRecorder.state === 'recording') {
-                    mediaRecorder.stop();
-                }
+                if (mediaRecorder && isRecording && mediaRecorder.state === 'recording') mediaRecorder.stop();
             }
 
             function cancelRecording() {
                 if (mediaRecorder && isRecording) {
-                    // 标记取消，清空数据
                     audioChunks = [];
+                    const stream = mediaRecorder.stream;
                     mediaRecorder.onstop = () => {
-                        // 停止所有track
-                        if (mediaRecorder.stream) {
-                            mediaRecorder.stream.getTracks().forEach(t => t.stop());
-                        }
+                        if (stream) stream.getTracks().forEach(t => t.stop());
                         clearInterval(recordingTimer);
-                        $('voice-btn').classList.remove('recording');
-                        $('voice-btn').textContent = '🎤';
-                        $('cancel-voice-btn').style.display = 'none';
-                        isRecording = false;
+                        resetVoiceBtn();
                     };
                     mediaRecorder.stop();
                 }
             }
 
-            function updateUI() {
-                updateSpeakAsList();
-                const char = currentCharacters.find(c => c.id === currentCharacterId);
-                $('current-role-display').textContent = char ? '👤 ' + char.name : '👤 Not in character';
-                const active = !!(currentCharacterId && currentLocation);
-                $('chat-input').disabled = !active;
-                $('send-btn').disabled = !active;
-                $('voice-btn').disabled = !active;
+            function resetVoiceBtn() {
+                $('voice-btn').classList.remove('recording');
+                $('voice-btn').textContent = '🎤';
                 $('cancel-voice-btn').style.display = 'none';
+                $('recording-status').style.display = 'none';
+                isRecording = false;
             }
 
-            function updateSpeakAsList() {
-                $('speak-as').innerHTML = '<option value="">-- Speak as... --</option>' + currentCharacters.map(c =>
-                    `<option value="${c.id}" ${c.id===currentCharacterId?'selected':''}>${esc(c.name)}</option>`).join(
-                    '');
+            function playAudio(url, voiceMsgEl) {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    if (currentAudioMsg) {
+                        currentAudioMsg.classList.remove('playing');
+                        currentAudioMsg.querySelector('.play-icon').textContent = '▶';
+                        currentAudioMsg.querySelector('.progress-fill').style.width = '0%';
+                    }
+                    if (currentAudioMsg === voiceMsgEl) { currentAudio = null;
+                        currentAudioMsg = null; return; }
+                }
+                const audio = new Audio(url);
+                currentAudio = audio;
+                currentAudioMsg = voiceMsgEl;
+                voiceMsgEl.classList.add('playing');
+                voiceMsgEl.querySelector('.play-icon').textContent = '⏸';
+                const progressFill = voiceMsgEl.querySelector('.progress-fill');
+                const totalDur = parseFloat(voiceMsgEl.dataset.duration) || 0;
+                audio.ontimeupdate = () => {
+                    if (audio.duration && totalDur > 0) progressFill.style.width = Math.min((audio
+                        .currentTime / totalDur) * 100, 100) + '%';
+                };
+                audio.onended = () => {
+                    voiceMsgEl.classList.remove('playing');
+                    voiceMsgEl.querySelector('.play-icon').textContent = '▶';
+                    progressFill.style.width = '0%';
+                    currentAudio = null;
+                    currentAudioMsg = null;
+                };
+                audio.onerror = () => { voiceMsgEl.querySelector('.play-icon').textContent = '⚠️'; };
+                audio.play().catch(() => { voiceMsgEl.querySelector('.play-icon').textContent = '▶'; });
             }
 
-            async function updateGraveyard() {
-                const { data } = await db.from('graveyard').select('*').order('death_time', { ascending: false });
-                $('grave-count').textContent = data ? data.length : 0;
-                if (!data || !data.length) { $('tombstone-list').innerHTML =
-                    '<p>Empty... for now.</p>'; return; }
-                $('tombstone-list').innerHTML = data.map(g => {
-                    const remaining = Math.max(0, 600 - Math.floor((Date.now() - new Date(g.death_time)
-                        .getTime()) / 1000));
-                    const canRevive = remaining <= 0;
-                    return `<div style="padding:4px 0;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;gap:6px;">
-                <span>🪦 ${esc(g.char_name)}</span>
-                <span style="font-size:0.7em;">${canRevive ? '🌱' : Math.floor(remaining/60)+':'+(remaining%60).toString().padStart(2,'0')}</span>
-                ${canRevive?`<button data-revive="${g.char_id}" data-grave="${g.id}" style="background:var(--success);color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:0.65em;">Return</button>`:''}
-              </div>`;
-                }).join('');
+            // === 角色卡 ===
+            function showCharacterCard(charId = null) {
+                const char = charId ? currentCharacters.find(c => c.id === charId) : currentCharacters.find(c => c
+                    .id === currentCharacterId);
+                if (!char) return;
+                $('character-card-content').innerHTML = `
+              <div style="text-align:center;margin-bottom:12px;">
+                <img src="${char.avatar_url || getAvatarUrl(char.name)}" style="width:60px;height:60px;border-radius:50%;background:#333;">
+                <h3 style="color:var(--gold);margin-top:6px;">${esc(char.name)}</h3>
+              </div>
+              <p><strong>Identity:</strong> ${esc(char.identity)}</p>
+              <p><strong>Occupation:</strong> ${esc(char.job)}</p>
+              <p><strong>Age:</strong> ${char.age}</p>
+              <p><strong>Reason:</strong> ${esc(char.reason)}</p>
+            `;
+                $('modal-character-card').classList.remove('hidden');
             }
 
-            async function updateGuidePanel() {
-                const { data } = await db.from('reports').select('*').eq('status', 'pending');
-                $('report-count').textContent = data ? data.length : 0;
-                if (!data || !data.length) { $('report-list').innerHTML =
-                    '<p>No pending reports.</p>'; return; }
-                $('report-list').innerHTML = data.map(r => `<div style="background:#111;padding:6px;margin-bottom:4px;border-radius:3px;">
-              <div style="font-size:0.75em;"><b>Reason:</b> ${esc(r.reason)}</div>
-              <div style="margin-top:4px;display:flex;gap:4px;">
-                <button data-report="${r.id}" data-action="approve" class="btn small danger">💀 Execute</button>
-                <button data-report="${r.id}" data-action="reject" class="btn small">✅ Dismiss</button>
-              </div></div>`).join('');
+            // === 创建角色 ===
+            function randomAvatarSeed() {
+                const seeds = ['cat', 'dog', 'fox', 'owl', 'bear', 'wolf', 'raven', 'lynx', 'hawk', 'deer', 'bat',
+                    'moth', 'crow', 'frog', 'newt'
+                ];
+                return seeds[Math.floor(Math.random() * seeds.length)] + Math.floor(Math.random() * 1000);
+            }
+
+            function updateAvatarPreview() {
+                const seed = $('char-avatar-seed').value.trim() || $('char-name').value.trim() || 'wanderer';
+                $('avatar-preview').src = getAvatarUrl(seed);
             }
 
             async function submitCharacter() {
@@ -455,9 +1056,11 @@
                 const job = $('char-job').value.trim();
                 const age = parseInt($('char-age').value);
                 const reason = $('char-reason').value.trim();
+                const seed = $('char-avatar-seed').value.trim() || name || randomAvatarSeed();
+                const avatar_url = getAvatarUrl(seed);
                 if (!name || !identity || !job || !age || !reason) return alert('All fields required.');
-                if (/[\u4e00-\u9fff]/.test(name + identity + job + reason)) return alert('English only!');
-                const { data } = await db.from('characters').insert({ name, identity, job, age, reason,
+                if (/[\u4e00-\u9fff]/.test(name + identity + job + reason)) return alert('⚠️ English only!');
+                const { data } = await db.from('characters').insert({ name, identity, job, age, reason, avatar_url,
                     alive: true }).select().single();
                 if (data) {
                     currentCharacterId = data.id;
@@ -466,171 +1069,184 @@
                     $('modal-character').classList.add('hidden');
                     updateUI();
                     renderLocations();
+                    updateOnlineStatus();
                 }
             }
 
-            // 语音播放引擎
-            let currentAudio = null;
-            let currentAudioMsg = null;
-
-            function playAudio(url, voiceMsgEl) {
-                // 停止之前的播放
-                if (currentAudio) {
-                    currentAudio.pause();
-                    if (currentAudioMsg) {
-                        currentAudioMsg.querySelector('.play-icon').textContent = '▶';
-                        currentAudioMsg.querySelector('.progress-fill').style.width = '0%';
-                    }
-                }
-                // 如果点的是同一个，就停止
-                if (currentAudioMsg === voiceMsgEl && currentAudio && !currentAudio.paused) {
-                    currentAudio.pause();
-                    voiceMsgEl.querySelector('.play-icon').textContent = '▶';
-                    return;
-                }
-                const audio = new Audio(url);
-                currentAudio = audio;
-                currentAudioMsg = voiceMsgEl;
-                const playIcon = voiceMsgEl.querySelector('.play-icon');
-                const progressFill = voiceMsgEl.querySelector('.progress-fill');
-                const durationEl = voiceMsgEl.querySelector('.duration');
-                const totalDur = parseFloat(voiceMsgEl.dataset.duration) || 0;
-
-                playIcon.textContent = '⏸';
-
-                audio.ontimeupdate = () => {
-                    if (audio.duration && totalDur > 0) {
-                        const pct = (audio.currentTime / totalDur) * 100;
-                        progressFill.style.width = Math.min(pct, 100) + '%';
-                    }
-                    if (durationEl && audio.duration && !totalDur) {
-                        durationEl.textContent = formatDuration(audio.currentTime);
-                    }
-                };
-
-                audio.onended = () => {
-                    playIcon.textContent = '▶';
-                    progressFill.style.width = '0%';
-                    currentAudio = null;
-                    currentAudioMsg = null;
-                };
-
-                audio.onerror = () => {
-                    playIcon.textContent = '⚠️';
-                    currentAudio = null;
-                    currentAudioMsg = null;
-                };
-
-                audio.play().catch(e => {
-                    console.error('Play failed:', e);
-                    playIcon.textContent = '▶';
-                });
+            // === 举报 ===
+            function openReportModal(charId, msgId) {
+                const char = currentCharacters.find(c => c.id === charId);
+                $('report-target-display').textContent = 'Reporting: ' + (char ? char.name : 'Unknown');
+                $('modal-report').dataset.charId = charId;
+                $('modal-report').dataset.msgId = msgId;
+                $('report-reason').value = '';
+                $('modal-report').classList.remove('hidden');
             }
 
-            // 全局事件委托
-            document.addEventListener('click', async (e) => {
-                const card = e.target.closest('.location-card');
-                if (card) { enterLocation(card.dataset.loc); return; }
-
-                const voiceMsg = e.target.closest('.voice-msg');
-                if (voiceMsg) {
-                    playAudio(voiceMsg.dataset.audio, voiceMsg);
-                    return;
-                }
-
-                if (e.target.classList.contains('report-btn')) {
-                    const charId = e.target.dataset.char;
-                    const msgId = e.target.dataset.msg;
-                    $('report-target-display').textContent = 'Reporting: ' + charId;
-                    $('modal-report').dataset.charId = charId;
-                    $('modal-report').dataset.msgId = msgId;
-                    $('modal-report').classList.remove('hidden');
-                    $('report-reason').value = '';
-                    return;
-                }
-
-                if (e.target.dataset.report && e.target.dataset.action) {
-                    const { report, action } = e.target.dataset;
-                    const { data: r } = await db.from('reports').select('*').eq('id', report).single();
-                    if (!r || r.status !== 'pending') return;
-                    if (action === 'approve') {
-                        await db.from('reports').update({ status: 'approved' }).eq('id', report);
-                        await db.from('characters').update({ alive: false }).eq('id', r.reported_char_id);
-                        const char = currentCharacters.find(c => c.id === r.reported_char_id);
-                        await db.from('graveyard').insert({ char_id: r.reported_char_id, char_name: char
-                                ?.name || 'Unknown', reason: r.reason });
-                        if (currentCharacterId === r.reported_char_id) { currentCharacterId = null;
-                            updateUI(); }
-                    } else {
-                        await db.from('reports').update({ status: 'rejected' }).eq('id', report);
-                    }
-                    await loadCharacters();
-                    updateGuidePanel();
-                    updateGraveyard();
-                    return;
-                }
-
-                if (e.target.dataset.revive) {
-                    const { revive, grave } = e.target.dataset;
-                    await db.from('graveyard').delete().eq('id', grave);
-                    await db.from('characters').delete().eq('id', revive);
-                    await loadCharacters();
-                    updateGraveyard();
-                    $('modal-character').classList.remove('hidden');
-                    return;
-                }
-            });
-
-            // 按钮事件
-            $('btn-create-char').onclick = () => {
-                $('char-name').value = '';
-                $('char-identity').value = '';
-                $('char-job').value = '';
-                $('char-age').value = '';
-                $('char-reason').value = '';
-                $('modal-character').classList.remove('hidden');
-            };
-            $('btn-cancel-char').onclick = () => $('modal-character').classList.add('hidden');
-            $('btn-submit-char').onclick = submitCharacter;
-            $('btn-cancel-report').onclick = () => $('modal-report').classList.add('hidden');
-            $('btn-submit-report').onclick = async () => {
+            async function submitReport() {
                 const reason = $('report-reason').value.trim();
                 if (!reason) return alert('Explain the flaw.');
                 await db.from('reports').insert({
                     reported_char_id: $('modal-report').dataset.charId,
                     reporter_char_id: currentCharacterId,
-                    reason: reason,
+                    reason,
                     status: 'pending'
                 });
                 $('modal-report').classList.add('hidden');
+                showBanner('✅ Report submitted. The Guide will review it.');
                 updateGuidePanel();
-            };
-            $('btn-graveyard').onclick = () => $('graveyard').classList.toggle('hidden');
-            $('btn-guide').onclick = () => $('guide-panel').classList.toggle('hidden');
-            $('send-btn').onclick = sendMessage;
-            $('chat-input').onkeydown = e => { if (e.key === 'Enter') sendMessage(); };
+            }
 
-            // 语音按钮
-            $('voice-btn').onmousedown = (e) => { e.preventDefault();
-                startRecording(); };
-            $('voice-btn').onmouseup = (e) => { e.preventDefault();
-                stopRecording(); };
-            $('voice-btn').onmouseleave = (e) => { if (isRecording) stopRecording(); };
-            $('voice-btn').ontouchstart = (e) => { e.preventDefault();
-                startRecording(); };
-            $('voice-btn').ontouchend = (e) => { e.preventDefault();
-                stopRecording(); };
+            async function handleReport(reportId, action) {
+                if (!isAdmin) return alert('Only the Guide can judge reports.');
+                const { data: r } = await db.from('reports').select('*').eq('id', reportId).single();
+                if (!r || r.status !== 'pending') return;
+                if (action === 'approve') {
+                    await db.from('reports').update({ status: 'approved', reporter_feedback: 'Your report was upheld.',
+                        reported_feedback: 'You were executed for logical contradiction.' }).eq('id', reportId);
+                    await db.from('characters').update({ alive: false }).eq('id', r.reported_char_id);
+                    const char = currentCharacters.find(c => c.id === r.reported_char_id);
+                    await db.from('graveyard').insert({ char_id: r.reported_char_id, char_name: char?.name ||
+                            'Unknown', reason: r.reason });
+                    if (currentCharacterId === r.reported_char_id) { currentCharacterId = null;
+                        updateUI(); }
+                    showBanner('💀 ' + (char?.name || 'Someone') + ' has been executed.');
+                } else {
+                    await db.from('reports').update({ status: 'rejected', reporter_feedback: 'Report dismissed.',
+                        reported_feedback: 'A report against you was dismissed.' }).eq('id', reportId);
+                    showBanner('✅ Report dismissed.');
+                }
+                await loadCharacters();
+                updateGuidePanel();
+                updateGraveyard();
+            }
 
-            $('cancel-voice-btn').onclick = cancelRecording;
-            $('cancel-voice-btn').onmousedown = (e) => e.preventDefault();
-            $('cancel-voice-btn').ontouchstart = (e) => e.preventDefault();
+            // === 管理面板 ===
+            async function updateGuidePanel() {
+                const { data } = await db.from('reports').select('*').eq('status', 'pending').order('created_at', {
+                    ascending: false });
+                $('report-count').textContent = data ? data.length : 0;
+                if (!data || !data.length) { $('report-list').innerHTML =
+                    '<p>No pending reports.</p>'; return; }
+                $('report-list').innerHTML = data.map(r => `<div style="background:#111;padding:6px;margin-bottom:4px;border-radius:3px;font-size:0.75em;">
+              <div><b>Target:</b> ${esc(r.reported_char_id)}</div>
+              <div><b>By:</b> ${esc(r.reporter_char_id)}</div>
+              <div><b>Flaw:</b> ${esc(r.reason)}</div>
+              <div style="margin-top:4px;display:flex;gap:4px;">
+                <button data-report="${r.id}" data-action="approve" class="btn small danger">💀</button>
+                <button data-report="${r.id}" data-action="reject" class="btn small">✅</button>
+              </div></div>`).join('');
+            }
 
-            $('speak-as').onchange = function() {
-                currentCharacterId = this.value || null;
-                if (currentCharacterId) localStorage.setItem('liars_world_current_char', currentCharacterId);
-                else localStorage.removeItem('liars_world_current_char');
-                updateUI();
-            };
+            async function updateGraveyard() {
+                const { data } = await db.from('graveyard').select('*').order('death_time', { ascending: false });
+                $('grave-count').textContent = data ? data.length : 0;
+                if (!data || !data.length) { $('tombstone-list').innerHTML =
+                    '<p>Empty... for now.</p>'; return; }
+                $('tombstone-list').innerHTML = data.map(g => {
+                    const remaining = Math.max(0, 600 - Math.floor((Date.now() - new Date(g.death_time).getTime()) /
+                        1000));
+                    const canRevive = remaining <= 0;
+                    return `<div style="padding:4px 0;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;gap:6px;">
+                <span>🪦 ${esc(g.char_name)}</span>
+                <span style="font-size:0.65em;">${canRevive ? '🌱' : Math.floor(remaining/60)+':'+(remaining%60).toString().padStart(2,'0')}</span>
+                ${canRevive?`<button data-revive="${g.char_id}" data-grave="${g.id}" style="background:var(--success);color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:0.65em;">Return</button>`:''}
+              </div>`;
+                }).join('');
+            }
+
+            function adminLogin() {
+                if ($('admin-password').value === ADMIN_PASSWORD) {
+                    isAdmin = true;
+                    $('admin-login').classList.add('hidden');
+                    $('admin-content').classList.remove('hidden');
+                    populateAdminSelects();
+                    showBanner('🔑 Admin access granted.');
+                } else { alert('Wrong password.'); }
+            }
+
+            function populateAdminSelects() {
+                $('admin-task-location').innerHTML = '<option value="all">All Locations</option>' + LOCATIONS.map(l =>
+                    `<option value="${l.id}">${l.icon} ${l.name}</option>`).join('');
+                $('admin-force-execute').innerHTML = '<option value="">-- Select --</option>' + currentCharacters.map(
+                    c => `<option value="${c.id}">${esc(c.name)} (${esc(c.identity)})</option>`).join('');
+            }
+
+            async function setDailyTask() {
+                if (!isAdmin) return;
+                const locId = $('admin-task-location').value;
+                const text = $('admin-task-text').value.trim();
+                if (!text) return alert('Enter a task.');
+                await db.from('daily_tasks').update({ active: false }).eq('active', true);
+                await db.from('daily_tasks').insert({ location_id: locId, task_text: text, active: true });
+                showBanner('📋 Daily task published!');
+                $('admin-task-text').value = '';
+                loadDailyTask();
+            }
+
+            async function forceExecute() {
+                if (!isAdmin) return;
+                const charId = $('admin-force-execute').value;
+                if (!charId) return;
+                const char = currentCharacters.find(c => c.id === charId);
+                await db.from('characters').update({ alive: false }).eq('id', charId);
+                await db.from('graveyard').insert({ char_id: charId, char_name: char?.name || 'Unknown',
+                    reason: 'Force executed by Guide.' });
+                await loadCharacters();
+                updateGraveyard();
+                populateAdminSelects();
+                if (currentCharacterId === charId) { currentCharacterId = null;
+                    updateUI(); }
+                showBanner('💀 Force executed: ' + (char?.name || charId));
+            }
+
+            async function deleteVoiceMessage() {
+                if (!isAdmin) return;
+                const msgId = $('admin-delete-voice').value.trim();
+                if (!msgId) return alert('Enter a message ID.');
+                const { data: msg } = await db.from('messages').select('*').eq('id', msgId).single();
+                if (msg && msg.audio_url) {
+                    const path = msg.audio_url.split('/').pop();
+                    await db.storage.from('voice_messages').remove([path]);
+                }
+                await db.from('messages').delete().eq('id', msgId);
+                showBanner('🗑️ Voice message deleted.');
+                $('admin-delete-voice').value = '';
+                if (currentLocation) loadMessages();
+            }
+
+            function adminLogout() {
+                isAdmin = false;
+                $('admin-login').classList.remove('hidden');
+                $('admin-content').classList.add('hidden');
+                $('admin-password').value = '';
+                showBanner('👋 Admin logged out.');
+            }
+
+            // === UI ===
+            function updateUI() {
+                updateSpeakAsList();
+                const char = currentCharacters.find(c => c.id === currentCharacterId);
+                const disp = $('current-role-display');
+                if (char) {
+                    disp.innerHTML =
+                        `<img src="${char.avatar_url || getAvatarUrl(char.name)}" onerror="this.src='${getAvatarUrl('fallback')}'"> ${esc(char.name)}`;
+                    disp.style.color = '#c9a96e';
+                } else {
+                    disp.innerHTML = '👤 Not in character';
+                    disp.style.color = '#8b7d6b';
+                }
+                const active = !!(currentCharacterId && currentLocation);
+                $('chat-input').disabled = !active;
+                $('send-btn').disabled = !active;
+                $('voice-btn').disabled = !active;
+            }
+
+            function updateSpeakAsList() {
+                $('speak-as').innerHTML = '<option value="">-- Speak as... --</option>' + currentCharacters.map(c =>
+                    `<option value="${c.id}" ${c.id===currentCharacterId?'selected':''}>${esc(c.name)}</option>`).join(
+                    '');
+            }
 
             async function checkGraveyardTimers() {
                 const { data } = await db.from('graveyard').select('*').eq('revivable', false);
@@ -642,21 +1258,108 @@
                 }
             }
 
-            // 启动
+            // === 全局事件 ===
+            document.addEventListener('click', async (e) => {
+                const card = e.target.closest('.location-card');
+                if (card) { enterLocation(card.dataset.loc); return; }
+                const vmsg = e.target.closest('.voice-msg');
+                if (vmsg && !e.target.closest('.report-btn')) { playAudio(vmsg.dataset.audio, vmsg); return; }
+                if (e.target.classList.contains('report-btn')) { openReportModal(e.target.dataset.char, e.target
+                        .dataset.msg); return; }
+                if (e.target.dataset.report && e.target.dataset.action) { handleReport(e.target.dataset.report, e
+                        .target.dataset.action); return; }
+                if (e.target.dataset.revive) {
+                    const { revive, grave } = e.target.dataset;
+                    await db.from('graveyard').delete().eq('id', grave);
+                    await db.from('characters').delete().eq('id', revive);
+                    await loadCharacters();
+                    updateGraveyard();
+                    $('modal-character').classList.remove('hidden');
+                }
+                const senderEl = e.target.closest('.sender');
+                if (senderEl && !e.target.closest('.voice-msg') && !e.target.closest('.report-btn')) {
+                    const msgEl = senderEl.closest('.message');
+                    if (msgEl && msgEl.classList.contains('other')) {
+                        const reportBtn = msgEl.querySelector('.report-btn');
+                        if (reportBtn) showCharacterCard(reportBtn.dataset.char);
+                    }
+                }
+            });
+
+            $('btn-create-char').onclick = () => {
+                const seed = randomAvatarSeed();
+                $('char-avatar-seed').value = seed;
+                updateAvatarPreview();
+                ['char-name', 'char-identity', 'char-job', 'char-age', 'char-reason'].forEach(id => $(id)
+            .value = '');
+                $('modal-character').classList.remove('hidden');
+            };
+            $('btn-random-avatar').onclick = () => { $('char-avatar-seed').value = randomAvatarSeed();
+                updateAvatarPreview(); };
+            $('char-avatar-seed').oninput = updateAvatarPreview;
+            $('char-name').oninput = updateAvatarPreview;
+            $('btn-cancel-char').onclick = () => $('modal-character').classList.add('hidden');
+            $('btn-submit-char').onclick = submitCharacter;
+            $('btn-cancel-report').onclick = () => $('modal-report').classList.add('hidden');
+            $('btn-submit-report').onclick = submitReport;
+            $('btn-close-card').onclick = () => $('modal-character-card').classList.add('hidden');
+            $('btn-online').onclick = () => { $('online-panel').classList.toggle('hidden');
+                loadOnlinePlayers(); };
+            $('btn-graveyard').onclick = () => $('graveyard').classList.toggle('hidden');
+            $('btn-guide').onclick = () => $('guide-panel').classList.toggle('hidden');
+            $('btn-admin').onclick = () => {
+                $('admin-panel').classList.toggle('hidden');
+                if (!isAdmin) { $('admin-login').classList.remove('hidden');
+                    $('admin-content').classList.add('hidden'); } else { populateAdminSelects(); }
+            };
+            $('btn-admin-login').onclick = adminLogin;
+            $('admin-password').onkeydown = e => { if (e.key === 'Enter') adminLogin(); };
+            $('btn-set-task').onclick = setDailyTask;
+            $('btn-force-execute').onclick = forceExecute;
+            $('btn-delete-voice').onclick = deleteVoiceMessage;
+            $('btn-admin-logout').onclick = adminLogout;
+            $('send-btn').onclick = sendMessage;
+            $('chat-input').onkeydown = e => { if (e.key === 'Enter') sendMessage(); };
+            $('voice-btn').onmousedown = e => { e.preventDefault();
+                startRecording(); };
+            $('voice-btn').onmouseup = e => { e.preventDefault();
+                stopRecording(); };
+            $('voice-btn').onmouseleave = e => { if (isRecording) stopRecording(); };
+            $('voice-btn').ontouchstart = e => { e.preventDefault();
+                startRecording(); };
+            $('voice-btn').ontouchend = e => { e.preventDefault();
+                stopRecording(); };
+            $('cancel-voice-btn').onclick = cancelRecording;
+            $('cancel-voice-btn').onmousedown = e => e.preventDefault();
+            $('speak-as').onchange = function() {
+                currentCharacterId = this.value || null;
+                if (currentCharacterId) localStorage.setItem('liars_world_current_char', currentCharacterId);
+                else localStorage.removeItem('liars_world_current_char');
+                updateUI();
+                updateOnlineStatus();
+            };
+            window.addEventListener('beforeunload', () => {
+                if (currentCharacterId) db.from('online_players').delete().eq('char_id', currentCharacterId);
+            });
+
+            // === 启动 ===
             (async function init() {
                 await loadCharacters();
+                await loadDailyTask();
                 renderLocations();
                 updateSpeakAsList();
                 updateGraveyard();
                 updateGuidePanel();
+                loadOnlinePlayers();
                 subscribeAll();
                 setInterval(checkGraveyardTimers, 5000);
-                const savedCharId = localStorage.getItem('liars_world_current_char');
-                if (savedCharId && currentCharacters.find(c => c.id === savedCharId && c.alive)) {
-                    currentCharacterId = savedCharId;
+                const saved = localStorage.getItem('liars_world_current_char');
+                if (saved && currentCharacters.find(c => c.id === saved && c.alive)) {
+                    currentCharacterId = saved;
                     updateUI();
+                    updateOnlineStatus();
                 }
-                console.log('✅ Liar\'s World Ready');
+                console.log('✅ Liar\'s World v2 Ready');
             })();
         })();
     </script>
