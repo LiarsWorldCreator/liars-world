@@ -6,230 +6,199 @@
     <title>Liar's World</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --bg: #1a1a2e;
-            --panel: #16213e;
-            --border: #0f3460;
-            --gold: #c9a96e;
-            --text: #e0d5c1;
-            --text-dark: #8b7d6b;
-            --danger: #8b3a3a;
-            --success: #3a6b3a;
-            --highlight: #2a4a7f;
-            --chat-bg: #0d1b2a;
-            --input-bg: #1c2a3a;
-            --recording: #cc3333;
-        }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:'Georgia','Times New Roman',serif; background:var(--bg); color:var(--text); min-height:100vh; -webkit-tap-highlight-color:transparent; }
-        #top-bar { background:var(--panel); border-bottom:1px solid var(--border); padding:8px 12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; position:sticky; top:0; z-index:100; }
-        #top-bar h1 { font-size:1.1em; letter-spacing:2px; color:var(--gold); cursor:pointer; }
-        #user-area { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-        #current-role-display { background:var(--highlight); padding:5px 10px; border-radius:4px; font-size:0.75em; display:flex; align-items:center; gap:6px; cursor:pointer; }
-        #current-role-display img { width:24px; height:24px; border-radius:50%; background:#333; }
-        .btn { background:var(--border); color:var(--text); border:1px solid var(--gold); padding:6px 12px; cursor:pointer; font-family:inherit; font-size:0.75em; border-radius:3px; transition:all 0.2s; white-space:nowrap; }
-        .btn:hover { background:var(--highlight); border-color:#e0c080; color:#fff; }
-        .btn:active { transform:scale(0.96); }
-        .btn.danger { border-color:var(--danger); }
-        .btn.danger:hover { background:var(--danger); }
-        .btn.small { padding:4px 8px; font-size:0.65em; }
-        .btn.recording { background:var(--recording); border-color:#ff4444; animation:pulse 0.8s infinite; color:#fff; }
-        @keyframes pulse { 0%,100% { box-shadow:0 0 0 0 rgba(204,51,51,0.5); } 50% { box-shadow:0 0 0 12px rgba(204,51,51,0); } }
-        .badge { background:var(--danger); color:#fff; border-radius:10px; padding:2px 6px; font-size:0.6em; min-width:16px; text-align:center; }
-        #main-container { display:flex; height:calc(100vh - 56px); }
-        #sidebar { width:280px; background:var(--panel); border-right:1px solid var(--border); padding:10px; overflow-y:auto; flex-shrink:0; display:flex; flex-direction:column; gap:8px; }
-        #sidebar h2 { font-size:0.8em; color:var(--gold); letter-spacing:1px; text-transform:uppercase; }
-        #daily-task-box { background:var(--chat-bg); border:1px solid var(--gold); padding:10px; border-radius:4px; font-size:0.7em; }
-        #daily-task-box h4 { color:var(--gold); margin-bottom:4px; font-size:0.8em; }
-        .location-card { background:var(--chat-bg); border:1px solid var(--border); padding:10px; cursor:pointer; border-radius:4px; transition:all 0.2s; font-size:0.85em; }
-        .location-card:hover { border-color:var(--gold); }
-        .location-card.active { border-color:var(--gold); background:#121e32; box-shadow:0 0 12px rgba(201,169,110,0.2); }
-        .location-card .capacity { font-size:0.65em; color:var(--text-dark); }
-        .location-card .capacity.full { color:var(--danger); }
-        .location-card .rules { font-size:0.6em; color:var(--text-dark); font-style:italic; margin-top:2px; }
-        #chat-area { flex:1; display:flex; flex-direction:column; background:var(--chat-bg); }
-        #chat-header { background:var(--panel); padding:10px 14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
-        #chat-header h3 { color:var(--gold); font-size:0.9em; }
-        #messages { flex:1; overflow-y:auto; padding:14px; display:flex; flex-direction:column; gap:6px; -webkit-overflow-scrolling:touch; }
-        .message { max-width:80%; padding:8px 12px; border-radius:6px; font-size:0.85em; position:relative; word-break:break-word; animation:fadeIn 0.2s ease; }
-        @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
-        .message .sender { font-size:0.65em; color:var(--gold); font-weight:bold; margin-bottom:2px; display:flex; align-items:center; gap:4px; }
-        .message .sender img { width:18px; height:18px; border-radius:50%; }
-        .message.own { align-self:flex-end; background:#1a3a5c; border:1px solid #2a5070; }
-        .message.other { align-self:flex-start; background:#1a1a2e; border:1px solid var(--border); }
-        .message.system { align-self:center; color:var(--text-dark); font-style:italic; font-size:0.75em; text-align:center; max-width:95%; }
-        .report-btn { position:absolute; top:-8px; right:-8px; background:var(--danger); color:#fff; width:24px; height:24px; border-radius:50%; cursor:pointer; font-size:11px; display:none; border:none; align-items:center; justify-content:center; z-index:5; }
-        .message.other:hover .report-btn, .message.other:active .report-btn { display:inline-flex; }
-        .voice-msg { display:inline-flex; align-items:center; gap:8px; background:#1a3050; padding:6px 12px; border-radius:20px; cursor:pointer; font-size:0.8em; user-select:none; }
-        .voice-msg .play-icon { font-size:1.1em; }
-        .voice-msg .duration { font-size:0.7em; color:var(--text-dark); }
-        .voice-msg .progress-bar { width:50px; height:3px; background:#333; border-radius:2px; overflow:hidden; }
-        .voice-msg .progress-fill { height:100%; background:var(--gold); width:0%; transition:width 0.1s linear; }
-        .voice-msg.playing { background:#2a4060; }
-        #input-area { padding:10px 12px; background:var(--panel); border-top:1px solid var(--border); display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
-        #input-area select { background:var(--input-bg); color:var(--text); border:1px solid var(--border); padding:8px; border-radius:3px; font-family:inherit; font-size:0.8em; max-width:140px; }
-        #input-area input { flex:1; min-width:100px; background:var(--input-bg); color:var(--text); border:1px solid var(--border); padding:8px 12px; border-radius:3px; font-family:inherit; font-size:0.85em; }
-        #voice-btn { font-size:1.2em; padding:8px 14px; min-width:44px; }
-        #cancel-voice-btn { display:none; background:#555; color:#fff; border:none; padding:6px 10px; border-radius:3px; cursor:pointer; font-size:0.7em; }
-        #recording-status { display:none; color:#ff6666; font-size:0.7em; animation:pulse 0.8s infinite; }
-        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:200; display:flex; align-items:center; justify-content:center; }
-        .modal { background:var(--panel); border:1px solid var(--gold); padding:20px; width:92%; max-width:500px; border-radius:6px; max-height:85vh; overflow-y:auto; }
-        .modal h2 { color:var(--gold); margin-bottom:12px; font-size:1em; letter-spacing:1px; }
-        .modal label { display:block; color:var(--text-dark); font-size:0.7em; margin-top:10px; text-transform:uppercase; letter-spacing:1px; }
-        .modal input, .modal textarea, .modal select { width:100%; background:var(--input-bg); color:var(--text); border:1px solid var(--border); padding:8px 10px; margin-top:4px; border-radius:3px; font-family:inherit; font-size:0.85em; }
-        .modal textarea { min-height:60px; resize:vertical; }
-        .modal .btn-row { display:flex; gap:8px; margin-top:14px; justify-content:flex-end; flex-wrap:wrap; }
-        .hidden { display:none !important; }
-        #online-panel { position:fixed; top:56px; right:10px; background:var(--panel); border:1px solid var(--gold); padding:12px; border-radius:6px; z-index:150; max-width:240px; max-height:50vh; overflow-y:auto; font-size:0.75em; box-shadow:0 8px 30px rgba(0,0,0,0.5); }
-        #online-panel h4 { color:var(--gold); margin-bottom:8px; font-size:0.8em; letter-spacing:1px; }
-        .online-player { display:flex; align-items:center; gap:6px; padding:4px 0; border-bottom:1px solid #1a1a2e; font-size:0.8em; }
-        .online-player img { width:22px; height:22px; border-radius:50%; }
-        .online-player .loc { font-size:0.65em; color:var(--text-dark); }
-        #graveyard, #guide-panel { position:fixed; bottom:10px; background:var(--panel); padding:10px; border-radius:6px; z-index:150; font-size:0.75em; max-width:300px; max-height:40vh; overflow-y:auto; box-shadow:0 8px 30px rgba(0,0,0,0.5); }
-        #graveyard { right:10px; border:1px solid #3a2a1a; }
-        #guide-panel { left:10px; border:1px solid var(--gold); }
-        #admin-panel { position:fixed; top:56px; left:10px; background:var(--panel); border:1px solid var(--gold); padding:14px; border-radius:6px; z-index:160; width:300px; max-height:70vh; overflow-y:auto; font-size:0.75em; box-shadow:0 8px 30px rgba(0,0,0,0.5); }
-        #admin-panel h4 { color:var(--gold); margin-bottom:8px; letter-spacing:1px; }
-        .feedback-banner { position:fixed; top:60px; left:50%; transform:translateX(-50%); background:var(--panel); border:1px solid var(--gold); padding:10px 20px; border-radius:6px; z-index:300; font-size:0.8em; animation:fadeIn 0.3s ease; box-shadow:0 4px 20px rgba(0,0,0,0.5); }
-        @media (max-width:768px) { #main-container { flex-direction:column; } #sidebar { width:100%; max-height:180px; flex-direction:row; flex-wrap:wrap; gap:4px; overflow-x:auto; } #sidebar h2 { display:none; } #daily-task-box { flex:0 0 auto; min-width:120px; font-size:0.6em; } .location-card { flex:0 0 auto; min-width:80px; text-align:center; font-size:0.7em; } #chat-area { min-height:50vh; } #online-panel { top:auto; bottom:50px; right:4px; max-width:180px; font-size:0.65em; } #graveyard, #guide-panel, #admin-panel { position:static; margin:4px; max-width:none; } }
+        :root{--bg:#1a1a2e;--panel:#16213e;--border:#0f3460;--gold:#c9a96e;--text:#e0d5c1;--text-dark:#8b7d6b;--danger:#8b3a3a;--success:#3a6b3a;--highlight:#2a4a7f;--chat-bg:#0d1b2a;--input-bg:#1c2a3a;--recording:#cc3333}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Georgia','Times New Roman',serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-tap-highlight-color:transparent}
+        #top-bar{background:var(--panel);border-bottom:1px solid var(--border);padding:8px 12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:100}
+        #top-bar h1{font-size:1.1em;letter-spacing:2px;color:var(--gold);cursor:pointer}
+        #user-area{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+        #current-role-display{background:var(--highlight);padding:5px 10px;border-radius:4px;font-size:.75em;display:flex;align-items:center;gap:6px;cursor:pointer}
+        #current-role-display img{width:24px;height:24px;border-radius:50%;background:#333}
+        .btn{background:var(--border);color:var(--text);border:1px solid var(--gold);padding:6px 12px;cursor:pointer;font-family:inherit;font-size:.75em;border-radius:3px;transition:all .2s;white-space:nowrap}
+        .btn:hover{background:var(--highlight);border-color:#e0c080;color:#fff}
+        .btn:active{transform:scale(.96)}
+        .btn.danger{border-color:var(--danger)}
+        .btn.danger:hover{background:var(--danger)}
+        .btn.small{padding:4px 8px;font-size:.65em}
+        .btn.recording{background:var(--recording);border-color:#f44;animation:pulse .8s infinite;color:#fff}
+        @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(204,51,51,.5)}50%{box-shadow:0 0 0 12px rgba(204,51,51,0)}}
+        #main-container{display:flex;height:calc(100vh - 56px)}
+        #sidebar{width:280px;background:var(--panel);border-right:1px solid var(--border);padding:10px;overflow-y:auto;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+        #sidebar h2{font-size:.8em;color:var(--gold);letter-spacing:1px;text-transform:uppercase}
+        #daily-task-box{background:var(--chat-bg);border:1px solid var(--gold);padding:10px;border-radius:4px;font-size:.7em}
+        #daily-task-box h4{color:var(--gold);margin-bottom:4px;font-size:.8em}
+        .location-card{background:var(--chat-bg);border:1px solid var(--border);padding:10px;cursor:pointer;border-radius:4px;transition:all .2s;font-size:.85em}
+        .location-card:hover{border-color:var(--gold)}
+        .location-card.active{border-color:var(--gold);background:#121e32;box-shadow:0 0 12px rgba(201,169,110,.2)}
+        .location-card .capacity{font-size:.65em;color:var(--text-dark)}
+        .location-card .capacity.full{color:var(--danger)}
+        .location-card .rules{font-size:.6em;color:var(--text-dark);font-style:italic;margin-top:2px}
+        #chat-area{flex:1;display:flex;flex-direction:column;background:var(--chat-bg)}
+        #chat-header{background:var(--panel);padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+        #chat-header h3{color:var(--gold);font-size:.9em}
+        #messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:6px;-webkit-overflow-scrolling:touch}
+        .message{max-width:80%;padding:8px 12px;border-radius:6px;font-size:.85em;position:relative;word-break:break-word;animation:fadeIn .2s ease}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        .message .sender{font-size:.65em;color:var(--gold);font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:4px}
+        .message .sender img{width:18px;height:18px;border-radius:50%}
+        .message.own{align-self:flex-end;background:#1a3a5c;border:1px solid #2a5070}
+        .message.other{align-self:flex-start;background:#1a1a2e;border:1px solid var(--border)}
+        .message.system{align-self:center;color:var(--text-dark);font-style:italic;font-size:.75em;text-align:center;max-width:95%}
+        .report-btn{position:absolute;top:-8px;right:-8px;background:var(--danger);color:#fff;width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:11px;display:none;border:none;align-items:center;justify-content:center;z-index:5}
+        .message.other:hover .report-btn,.message.other:active .report-btn{display:inline-flex}
+        .voice-msg{display:inline-flex;align-items:center;gap:8px;background:#1a3050;padding:6px 12px;border-radius:20px;cursor:pointer;font-size:.8em;user-select:none}
+        .voice-msg .play-icon{font-size:1.1em}
+        .voice-msg .duration{font-size:.7em;color:var(--text-dark)}
+        .voice-msg .progress-bar{width:50px;height:3px;background:#333;border-radius:2px;overflow:hidden}
+        .voice-msg .progress-fill{height:100%;background:var(--gold);width:0%;transition:width .1s linear}
+        .voice-msg.playing{background:#2a4060}
+        #input-area{padding:10px 12px;background:var(--panel);border-top:1px solid var(--border);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+        #input-area select{background:var(--input-bg);color:var(--text);border:1px solid var(--border);padding:8px;border-radius:3px;font-family:inherit;font-size:.8em;max-width:140px}
+        #input-area input{flex:1;min-width:100px;background:var(--input-bg);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:3px;font-family:inherit;font-size:.85em}
+        #voice-btn{font-size:1.2em;padding:8px 14px;min-width:44px}
+        #cancel-voice-btn{display:none;background:#555;color:#fff;border:none;padding:6px 10px;border-radius:3px;cursor:pointer;font-size:.7em}
+        #recording-status{display:none;color:#f66;font-size:.7em;animation:pulse .8s infinite}
+        .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.8);z-index:200;display:flex;align-items:center;justify-content:center}
+        .modal{background:var(--panel);border:1px solid var(--gold);padding:20px;width:92%;max-width:500px;border-radius:6px;max-height:85vh;overflow-y:auto}
+        .modal h2{color:var(--gold);margin-bottom:12px;font-size:1em;letter-spacing:1px}
+        .modal label{display:block;color:var(--text-dark);font-size:.7em;margin-top:10px;text-transform:uppercase;letter-spacing:1px}
+        .modal input,.modal textarea,.modal select{width:100%;background:var(--input-bg);color:var(--text);border:1px solid var(--border);padding:8px 10px;margin-top:4px;border-radius:3px;font-family:inherit;font-size:.85em}
+        .modal textarea{min-height:60px;resize:vertical}
+        .modal .btn-row{display:flex;gap:8px;margin-top:14px;justify-content:flex-end;flex-wrap:wrap}
+        .hidden{display:none!important}
+        #online-panel{position:fixed;top:56px;right:10px;background:var(--panel);border:1px solid var(--gold);padding:12px;border-radius:6px;z-index:150;max-width:240px;max-height:50vh;overflow-y:auto;font-size:.75em;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+        #online-panel h4{color:var(--gold);margin-bottom:8px;font-size:.8em;letter-spacing:1px}
+        .online-player{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #1a1a2e;font-size:.8em}
+        .online-player img{width:22px;height:22px;border-radius:50%}
+        .online-player .loc{font-size:.65em;color:var(--text-dark)}
+        #graveyard,#guide-panel{position:fixed;bottom:10px;background:var(--panel);padding:10px;border-radius:6px;z-index:150;font-size:.75em;max-width:300px;max-height:40vh;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+        #graveyard{right:10px;border:1px solid #3a2a1a}
+        #guide-panel{left:10px;border:1px solid var(--gold)}
+        #admin-panel{position:fixed;top:56px;left:10px;background:var(--panel);border:1px solid var(--gold);padding:14px;border-radius:6px;z-index:160;width:300px;max-height:70vh;overflow-y:auto;font-size:.75em;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+        #admin-panel h4{color:var(--gold);margin-bottom:8px;letter-spacing:1px}
+        .feedback-banner{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--gold);padding:10px 20px;border-radius:6px;z-index:300;font-size:.8em;animation:fadeIn .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.5)}
+        @media(max-width:768px){#main-container{flex-direction:column}#sidebar{width:100%;max-height:180px;flex-direction:row;flex-wrap:wrap;gap:4px;overflow-x:auto}#sidebar h2{display:none}#daily-task-box{flex:0 0 auto;min-width:120px;font-size:.6em}.location-card{flex:0 0 auto;min-width:80px;text-align:center;font-size:.7em}#chat-area{min-height:50vh}#online-panel{top:auto;bottom:50px;right:4px;max-width:180px;font-size:.65em}#graveyard,#guide-panel,#admin-panel{position:static;margin:4px;max-width:none}}
     </style>
 </head>
 <body>
-    <div id="top-bar"><h1 onclick="location.reload()">Liar's World</h1><div id="user-area"><span id="current-role-display" onclick="showCharacterCard()">👤 Not in character</span><button class="btn small" id="btn-create-char">+ New</button><button class="btn small" id="btn-online">👥 <span id="online-count">0</span></button><button class="btn small danger" id="btn-graveyard">🪦 <span id="grave-count">0</span></button><button class="btn small" id="btn-guide">⚖️ <span id="report-count">0</span></button><button class="btn small" id="btn-admin">🔑 Admin</button></div></div>
+    <div id="top-bar"><h1>Liar's World</h1><div id="user-area"><span id="current-role-display">👤 Not in character</span><button class="btn small" id="btn-create-char">+ New</button><button class="btn small" id="btn-online">👥 <span id="online-count">0</span></button><button class="btn small danger" id="btn-graveyard">🪦 <span id="grave-count">0</span></button><button class="btn small" id="btn-guide">⚖️ <span id="report-count">0</span></button><button class="btn small" id="btn-admin">🔑 Admin</button></div></div>
     <div id="main-container">
         <div id="sidebar"><h2>📍 Village</h2><div id="daily-task-box"><h4>📋 Today's Task</h4><p id="daily-task-text">Loading...</p></div><div id="location-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div></div>
-        <div id="chat-area"><div id="chat-header"><h3 id="chat-title">Select a location</h3><span id="scene-rules" style="font-size:0.65em;color:var(--text-dark);"></span></div><div id="messages"><div class="message system">Welcome to <span style="color:var(--gold);">Liar's World</span>. Create a character to begin.</div></div>
+        <div id="chat-area"><div id="chat-header"><h3 id="chat-title">Select a location</h3><span id="scene-rules" style="font-size:.65em;color:var(--text-dark);"></span></div><div id="messages"><div class="message system">Welcome to <span style="color:var(--gold);">Liar's World</span>.</div></div>
         <div id="input-area"><select id="speak-as"><option value="">-- Speak as... --</option></select><input type="text" id="chat-input" placeholder="English only..." disabled><button class="btn" id="voice-btn" disabled>🎤</button><button class="btn" id="cancel-voice-btn">✕</button><span id="recording-status">🔴 Recording...</span><button class="btn" id="send-btn" disabled>Send</button></div></div>
     </div>
     <div id="online-panel" class="hidden"><h4>👥 Online Now</h4><div id="online-list"></div></div>
     <div id="graveyard" class="hidden"><h4>🪦 Graveyard</h4><div id="tombstone-list"></div></div>
     <div id="guide-panel" class="hidden"><h4>⚖️ Reports</h4><div id="report-list"></div></div>
-    <div id="admin-panel" class="hidden"><h4>🔑 Admin Panel</h4><div id="admin-login"><label>Password</label><input type="password" id="admin-password" placeholder="Enter admin password..."><button class="btn" id="btn-admin-login" style="margin-top:6px;">Login</button></div><div id="admin-content" class="hidden"><label>Set Daily Task</label><select id="admin-task-location"><option value="all">All Locations</option></select><textarea id="admin-task-text" placeholder="Today's task description..."></textarea><button class="btn" id="btn-set-task" style="margin-top:4px;">Publish Task</button><hr style="border-color:var(--border);margin:8px 0;"><label>Force Execute Player</label><select id="admin-force-execute"></select><button class="btn danger" id="btn-force-execute" style="margin-top:4px;">💀 Execute</button><hr style="border-color:var(--border);margin:8px 0;"><label>Delete Voice Message (enter message ID)</label><input type="text" id="admin-delete-voice" placeholder="Message UUID..."><button class="btn danger" id="btn-delete-voice" style="margin-top:4px;">🗑️ Delete</button><button class="btn" id="btn-admin-logout" style="margin-top:8px;">Logout</button></div></div>
-    <div id="modal-character" class="modal-overlay hidden"><div class="modal"><h2>Create Your Lie</h2><label>Avatar</label><div style="display:flex;align-items:center;gap:10px;margin-top:4px;"><img id="avatar-preview" src="" style="width:50px;height:50px;border-radius:50%;background:#333;"><button class="btn small" id="btn-random-avatar">🎲 Random</button><input type="text" id="char-avatar-seed" placeholder="Seed word..." style="flex:1;"></div><label>Name</label><input type="text" id="char-name" placeholder="e.g. Elias Thornwood"><label>Identity</label><input type="text" id="char-identity" placeholder="e.g. Wandering Merchant"><label>Occupation</label><input type="text" id="char-job" placeholder="e.g. Blacksmith"><label>Age</label><input type="number" id="char-age" placeholder="e.g. 34" min="16" max="120"><label>Reason for Coming</label><textarea id="char-reason" placeholder="Why are you here...?"></textarea><div class="btn-row"><button class="btn" id="btn-cancel-char">Cancel</button><button class="btn" id="btn-submit-char">Enter Village</button></div></div></div>
-    <div id="modal-report" class="modal-overlay hidden"><div class="modal"><h2>Report Logical Flaw</h2><label>What's the contradiction?</label><textarea id="report-reason" placeholder="Explain the logical flaw clearly..."></textarea><p id="report-target-display" style="font-size:0.75em;margin-top:6px;"></p><div class="btn-row"><button class="btn" id="btn-cancel-report">Cancel</button><button class="btn danger" id="btn-submit-report">Submit Report</button></div></div></div>
+    <div id="admin-panel" class="hidden"><h4>🔑 Admin Panel</h4><div id="admin-login"><label>Password</label><input type="password" id="admin-password" placeholder="Enter admin password..."><button class="btn" id="btn-admin-login" style="margin-top:6px;">Login</button></div><div id="admin-content" class="hidden"><label>Set Daily Task</label><select id="admin-task-location"><option value="all">All</option></select><textarea id="admin-task-text" placeholder="Task..."></textarea><button class="btn" id="btn-set-task" style="margin-top:4px;">Publish</button><hr style="border-color:var(--border);margin:8px 0"><label>Force Execute</label><select id="admin-force-execute"></select><button class="btn danger" id="btn-force-execute" style="margin-top:4px;">💀 Execute</button><hr style="border-color:var(--border);margin:8px 0"><label>Delete Voice (message ID)</label><input type="text" id="admin-delete-voice" placeholder="UUID..."><button class="btn danger" id="btn-delete-voice" style="margin-top:4px;">🗑️ Delete</button><button class="btn" id="btn-admin-logout" style="margin-top:8px;">Logout</button></div></div>
+    <div id="modal-character" class="modal-overlay hidden"><div class="modal"><h2>Create Your Lie</h2><label>Avatar</label><div style="display:flex;align-items:center;gap:10px;margin-top:4px;"><img id="avatar-preview" src="" style="width:50px;height:50px;border-radius:50%;background:#333"><button class="btn small" id="btn-random-avatar">🎲 Random</button><input type="text" id="char-avatar-seed" placeholder="Seed..." style="flex:1"></div><label>Name</label><input type="text" id="char-name" placeholder="e.g. Elias Thornwood"><label>Identity</label><input type="text" id="char-identity" placeholder="e.g. Wandering Merchant"><label>Occupation</label><input type="text" id="char-job" placeholder="e.g. Blacksmith"><label>Age</label><input type="number" id="char-age" placeholder="e.g. 34" min="16" max="120"><label>Reason for Coming</label><textarea id="char-reason" placeholder="Why are you here...?"></textarea><div class="btn-row"><button class="btn" id="btn-cancel-char">Cancel</button><button class="btn" id="btn-submit-char">Enter Village</button></div></div></div>
+    <div id="modal-report" class="modal-overlay hidden"><div class="modal"><h2>Report Flaw</h2><label>Contradiction?</label><textarea id="report-reason" placeholder="Explain..."></textarea><p id="report-target-display" style="font-size:.75em;margin-top:6px;"></p><div class="btn-row"><button class="btn" id="btn-cancel-report">Cancel</button><button class="btn danger" id="btn-submit-report">Submit</button></div></div></div>
     <div id="modal-character-card" class="modal-overlay hidden"><div class="modal"><h2>Character Card</h2><div id="character-card-content"></div><div class="btn-row"><button class="btn" id="btn-close-card">Close</button></div></div></div>
-
     <script>
-    (function() {
-        var SUPABASE_URL = 'https://jhxvmwdrqwfakeaptbdt.supabase.co';
-        var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeHZtd2RycXdmYWtlYXB0YmR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNzk0MzYsImV4cCI6MjA5NDc1NTQzNn0.NJ0zwaGze_YoKCG9etfsVk8ERZiVMkO-M0sMQpWhnRE';
-        var ADMIN_PASSWORD = '19701974Wo.';
-        var db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    (function(){
+        var SUPABASE_URL='https://jhxvmwdrqwfakeaptbdt.supabase.co';
+        var SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeHZtd2RycXdmYWtlYXB0YmR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNzk0MzYsImV4cCI6MjA5NDc1NTQzNn0.NJ0zwaGze_YoKCG9etfsVk8ERZiVMkO-M0sMQpWhnRE';
+        var ADMIN_PASSWORD='19701974Wo.';
+        var db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+        var LOCATIONS=[{id:'teahouse',name:'Tea House',icon:'🍵',capacity:8,rules:'Speak softly.'},{id:'tavern',name:'Tavern',icon:'🍺',capacity:8,rules:'Loud. Exaggeration encouraged.'},{id:'restaurant',name:'Restaurant',icon:'🍽️',capacity:6,rules:'Discuss food and travel.'},{id:'casino',name:'Casino',icon:'🎲',capacity:6,rules:'Every statement is a gamble.'},{id:'farm',name:'Farm',icon:'🌾',capacity:2,rules:'Only two. No secrets.'},{id:'dirtroad',name:'Dirt Road',icon:'🛤️',capacity:1,rules:'Solitude.'},{id:'chiefhouse',name:"Chief's House",icon:'🏛️',capacity:3,rules:'Meaning of life only.'}];
+        var cl=null,cid=null,chars=[],isAdmin=false;
+        var mr=null,chunks=[],rec=false,recStart=0,recTimer=null;
+        var cAudio=null,cAudioMsg=null,sendingVoice=false;
 
-        var LOCATIONS = [
-            { id:'teahouse', name:'Tea House', icon:'🍵', capacity:8, rules:'Speak softly.' },
-            { id:'tavern', name:'Tavern', icon:'🍺', capacity:8, rules:'Loud. Exaggeration encouraged.' },
-            { id:'restaurant', name:'Restaurant', icon:'🍽️', capacity:6, rules:'Discuss food and travel.' },
-            { id:'casino', name:'Casino', icon:'🎲', capacity:6, rules:'Every statement is a gamble.' },
-            { id:'farm', name:'Farm', icon:'🌾', capacity:2, rules:'Only two. No secrets.' },
-            { id:'dirtroad', name:'Dirt Road', icon:'🛤️', capacity:1, rules:'Solitude.' },
-            { id:'chiefhouse', name:"Chief's House", icon:'🏛️', capacity:3, rules:'Meaning of life only.' }
-        ];
+        function $(id){return document.getElementById(id);}
+        function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+        function fd(s){return Math.floor(s/60)+':'+(Math.floor(s%60)+'').padStart(2,'0');}
+        function av(s){return 'https://api.dicebear.com/7.x/bottts-neutral/svg?seed='+encodeURIComponent(s)+'&backgroundColor=333333,555555,777777';}
+        function ban(msg){var b=document.createElement('div');b.className='feedback-banner';b.textContent=msg;document.body.appendChild(b);setTimeout(function(){b.remove();},3000);}
 
-        var currentLocation = null, currentCharacterId = null, currentCharacters = [], isAdmin = false;
-        var mediaRecorder = null, audioChunks = [], isRecording = false, recordingStartTime = 0, recordingTimer = null;
-        var currentAudio = null, currentAudioMsg = null, isSendingVoice = false;
+        async function lc(){var r=await db.from('characters').select('*').eq('alive',true);if(r.data)chars=r.data;}
+        async function lt(){var r=await db.from('daily_tasks').select('*').eq('active',true).order('created_at',{ascending:false}).limit(1);if(r.data&&r.data.length){var d=r.data[0];var n=d.location_id==='all'?'All':(LOCATIONS.find(function(l){return l.id===d.location_id;})||{}).name||d.location_id;$('daily-task-text').textContent='['+n+'] '+d.task_text;}else{$('daily-task-text').textContent='No task today.';}}
+        async function ou(){if(!cid)return;var c=chars.find(function(x){return x.id===cid;});if(!c)return;var ex=await db.from('online_players').select('*').eq('char_id',cid);if(ex.data&&ex.data.length)await db.from('online_players').update({location_id:cl,last_seen:new Date()}).eq('char_id',cid);else await db.from('online_players').insert({char_id:cid,char_name:c.name,avatar_url:c.avatar_url,location_id:cl,last_seen:new Date()});lo();}
+        async function lo(){var r=await db.from('online_players').select('*').order('last_seen',{ascending:false});var p=r.data||[];$('online-count').textContent=p.length;$('online-list').innerHTML=p.map(function(x){var l=LOCATIONS.find(function(y){return y.id===x.location_id;});return '<div class="online-player"><img src="'+(x.avatar_url||av(x.char_name))+'" onerror="this.src=\''+av('fb')+'\'"><span>'+esc(x.char_name)+'</span><span class="loc">@ '+(l?l.icon:'?')+' '+(l?l.name:'?')+'</span></div>';}).join('');}
+        async function co(){await db.from('online_players').delete().lt('last_seen',new Date(Date.now()-120000).toISOString());}
+        setInterval(co,60000);
+        setInterval(function(){if(cid)ou();},30000);
 
-        function $(id) { return document.getElementById(id); }
-        function esc(s) { var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
-        function fmtDur(s) { return Math.floor(s/60)+':'+(Math.floor(s%60)+'').padStart(2,'0'); }
-        function avatarUrl(seed) { return 'https://api.dicebear.com/7.x/bottts-neutral/svg?seed='+encodeURIComponent(seed)+'&backgroundColor=333333,555555,777777'; }
-        function banner(msg) { var b=document.createElement('div'); b.className='feedback-banner'; b.textContent=msg; document.body.appendChild(b); setTimeout(function(){b.remove();},3500); }
+        function rl(){$('location-list').innerHTML=LOCATIONS.map(function(l){var cnt=(cl===l.id&&cid)?1:0;return '<div class="location-card'+(cl===l.id?' active':'')+'" data-loc="'+l.id+'"><div>'+l.icon+' <strong>'+l.name+'</strong></div><div class="capacity'+(cnt>=l.capacity?' full':'')+'">'+cnt+'/'+l.capacity+'</div><div class="rules">'+l.rules+'</div></div>';}).join('');}
+        function el(id){cl=id;var l=LOCATIONS.find(function(x){return x.id===id;});$('chat-title').textContent=l.icon+' '+l.name;$('scene-rules').textContent=l.rules;rl();lm();uu();ou();}
+        async function lm(){if(!cl)return;var r=await db.from('messages').select('*').eq('location_id',cl).order('created_at',{ascending:true}).limit(50);rm(r.data||[]);}
+        function rm(ms){if(!ms.length){$('messages').innerHTML='<div class="message system">Silence.</div>';return;}$('messages').innerHTML=ms.map(function(m){if(m.type==='system')return '<div class="message system">'+esc(m.text)+'</div>';var own=m.char_id===cid;var c=chars.find(function(x){return x.id===m.char_id;});var avt=c?(c.avatar_url||av(c.name)):av(m.char_name||'?');var cnt;if(m.audio_url){cnt='<div class="voice-msg" data-audio="'+m.audio_url+'" data-dur="'+(m.duration||0)+'"><span class="play-icon">▶</span><span class="duration">'+fd(m.duration||0)+'</span><div class="progress-bar"><div class="progress-fill"></div></div></div>';}else{cnt='<div>'+esc(m.text)+'</div>';}return '<div class="message '+(own?'own':'other')+'"><div class="sender"><img src="'+avt+'" onerror="this.src=\''+av('fb')+'\'"> '+esc(m.char_name||'Ghost')+'</div>'+cnt+(own?'':'<button class="report-btn" data-char="'+m.char_id+'" data-msg="'+m.id+'">!</button>')+'</div>';}).join('');$('messages').scrollTop=$('messages').scrollHeight;}
+        function am(m){if(m.type==='system'){$('messages').insertAdjacentHTML('beforeend','<div class="message system">'+esc(m.text)+'</div>');}else{var own=m.char_id===cid;var c=chars.find(function(x){return x.id===m.char_id;});var avt=c?(c.avatar_url||av(c.name)):av(m.char_name||'?');var cnt;if(m.audio_url){cnt='<div class="voice-msg" data-audio="'+m.audio_url+'" data-dur="'+(m.duration||0)+'"><span class="play-icon">▶</span><span class="duration">'+fd(m.duration||0)+'</span><div class="progress-bar"><div class="progress-fill"></div></div></div>';}else{cnt='<div>'+esc(m.text)+'</div>';}$('messages').insertAdjacentHTML('beforeend','<div class="message '+(own?'own':'other')+'"><div class="sender"><img src="'+avt+'" onerror="this.src=\''+av('fb')+'\'"> '+esc(m.char_name||'Ghost')+'</div>'+cnt+(own?'':'<button class="report-btn" data-char="'+m.char_id+'" data-msg="'+m.id+'">!</button>')+'</div>');}$('messages').scrollTop=$('messages').scrollHeight;}
+        function sub(){db.channel('m').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},function(p){if(p.new.location_id===cl&&p.new.type!=='system')am(p.new);}).subscribe();db.channel('r').on('postgres_changes',{event:'*',schema:'public',table:'reports'},ug).subscribe();db.channel('g').on('postgres_changes',{event:'*',schema:'public',table:'graveyard'},uv).subscribe();db.channel('o').on('postgres_changes',{event:'*',schema:'public',table:'online_players'},lo).subscribe();db.channel('d').on('postgres_changes',{event:'*',schema:'public',table:'daily_tasks'},lt).subscribe();}
 
-        async function loadChars() { var r=await db.from('characters').select('*').eq('alive',true); if(r.data)currentCharacters=r.data; }
-        async function loadTask() { var r=await db.from('daily_tasks').select('*').eq('active',true).order('created_at',{ascending:false}).limit(1); $('daily-task-text').textContent = (r.data&&r.data.length) ? (function(){var d=r.data[0]; var n=d.location_id==='all'?'All':(LOCATIONS.find(function(l){return l.id===d.location_id;})||{}).name||d.location_id; return '['+n+'] '+d.task_text;})() : 'No task today.'; }
-        async function onlineUpdate() { if(!currentCharacterId)return; var c=currentCharacters.find(function(x){return x.id===currentCharacterId;}); if(!c)return; var ex=await db.from('online_players').select('*').eq('char_id',currentCharacterId); if(ex.data&&ex.data.length) await db.from('online_players').update({location_id:currentLocation,last_seen:new Date()}).eq('char_id',currentCharacterId); else await db.from('online_players').insert({char_id:currentCharacterId,char_name:c.name,avatar_url:c.avatar_url,location_id:currentLocation,last_seen:new Date()}); loadOnline(); }
-        async function loadOnline() { var r=await db.from('online_players').select('*').order('last_seen',{ascending:false}); var p=r.data||[]; $('online-count').textContent=p.length; $('online-list').innerHTML=p.map(function(x){var l=LOCATIONS.find(function(y){return y.id===x.location_id;}); return '<div class="online-player"><img src="'+(x.avatar_url||avatarUrl(x.char_name))+'" onerror="this.src=\''+avatarUrl('fb')+'\'"><span>'+esc(x.char_name)+'</span><span class="loc">@ '+(l?l.icon:'?')+' '+(l?l.name:'?')+'</span></div>';}).join(''); }
-        async function cleanOnline() { await db.from('online_players').delete().lt('last_seen',new Date(Date.now()-120000).toISOString()); }
-        setInterval(cleanOnline,60000);
-        setInterval(function(){if(currentCharacterId)onlineUpdate();},30000);
+        async function sm(){if(!cl||!cid)return;var t=$('chat-input').value.trim();if(!t)return;if(/[\u4e00-\u9fff]/.test(t)){alert('English only!');return;}var c=chars.find(function(x){return x.id===cid;});await db.from('messages').insert({location_id:cl,char_id:cid,char_name:c.name,text:t,type:'chat'});$('chat-input').value='';}
 
-        function renderLocs() { $('location-list').innerHTML = LOCATIONS.map(function(l){ var cnt=(currentLocation===l.id&&currentCharacterId)?1:0; return '<div class="location-card'+(currentLocation===l.id?' active':'')+'" data-loc="'+l.id+'"><div>'+l.icon+' <strong>'+l.name+'</strong></div><div class="capacity'+(cnt>=l.capacity?' full':'')+'">'+cnt+'/'+l.capacity+'</div><div class="rules">'+l.rules+'</div></div>'; }).join(''); }
-        function enterLoc(id) { currentLocation=id; var l=LOCATIONS.find(function(x){return x.id===id;}); $('chat-title').textContent=l.icon+' '+l.name; $('scene-rules').textContent=l.rules; renderLocs(); loadMsgs(); updateUI(); onlineUpdate(); }
-        async function loadMsgs() { if(!currentLocation)return; var r=await db.from('messages').select('*').eq('location_id',currentLocation).order('created_at',{ascending:true}).limit(50); renderMsgs(r.data||[]); }
-        function renderMsgs(msgs) { if(!msgs.length){$('messages').innerHTML='<div class="message system">Silence.</div>';return;} $('messages').innerHTML=msgs.map(function(m){ if(m.type==='system')return '<div class="message system">'+esc(m.text)+'</div>'; var own=m.char_id===currentCharacterId; var c=currentCharacters.find(function(x){return x.id===m.char_id;}); var av=c?(c.avatar_url||avatarUrl(c.name)):avatarUrl(m.char_name||'?'); var cnt; if(m.audio_url){ cnt='<div class="voice-msg" data-audio="'+m.audio_url+'" data-dur="'+(m.duration||0)+'"><span class="play-icon">▶</span><span class="duration">'+fmtDur(m.duration||0)+'</span><div class="progress-bar"><div class="progress-fill"></div></div></div>'; } else { cnt='<div>'+esc(m.text)+'</div>'; } return '<div class="message '+(own?'own':'other')+'"><div class="sender"><img src="'+av+'" onerror="this.src=\''+avatarUrl('fb')+'\'"> '+esc(m.char_name||'Ghost')+'</div>'+cnt+(own?'':'<button class="report-btn" data-char="'+m.char_id+'" data-msg="'+m.id+'">!</button>')+'</div>'; }).join(''); $('messages').scrollTop=$('messages').scrollHeight; }
-        function addMsg(m) { if(m.type==='system'){$('messages').insertAdjacentHTML('beforeend','<div class="message system">'+esc(m.text)+'</div>');}else{var own=m.char_id===currentCharacterId;var c=currentCharacters.find(function(x){return x.id===m.char_id;});var av=c?(c.avatar_url||avatarUrl(c.name)):avatarUrl(m.char_name||'?');var cnt;if(m.audio_url){cnt='<div class="voice-msg" data-audio="'+m.audio_url+'" data-dur="'+(m.duration||0)+'"><span class="play-icon">▶</span><span class="duration">'+fmtDur(m.duration||0)+'</span><div class="progress-bar"><div class="progress-fill"></div></div></div>';}else{cnt='<div>'+esc(m.text)+'</div>';}$('messages').insertAdjacentHTML('beforeend','<div class="message '+(own?'own':'other')+'"><div class="sender"><img src="'+av+'" onerror="this.src=\''+avatarUrl('fb')+'\'"> '+esc(m.char_name||'Ghost')+'</div>'+cnt+(own?'':'<button class="report-btn" data-char="'+m.char_id+'" data-msg="'+m.id+'">!</button>')+'</div>');}$('messages').scrollTop=$('messages').scrollHeight;}
-        function subAll() { db.channel('m').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},function(p){if(p.new.location_id===currentLocation&&p.new.type!=='system')addMsg(p.new);}).subscribe(); db.channel('r').on('postgres_changes',{event:'*',schema:'public',table:'reports'},upGuide).subscribe(); db.channel('g').on('postgres_changes',{event:'*',schema:'public',table:'graveyard'},upGrave).subscribe(); db.channel('o').on('postgres_changes',{event:'*',schema:'public',table:'online_players'},loadOnline).subscribe(); db.channel('d').on('postgres_changes',{event:'*',schema:'public',table:'daily_tasks'},loadTask).subscribe(); }
+        async function sr(){if(!cl||!cid){alert('Enter a location first.');return;}if(rec||sendingVoice)return;try{var stream=await navigator.mediaDevices.getUserMedia({audio:true});mr=new MediaRecorder(stream,{mimeType:'audio/webm;codecs=opus'});chunks=[];recStart=Date.now();sendingVoice=false;mr.ondataavailable=function(e){if(e.data.size>0)chunks.push(e.data);};mr.onstop=async function(){stream.getTracks().forEach(function(t){t.stop();});clearInterval(recTimer);var dur=(Date.now()-recStart)/1000;$('cancel-voice-btn').style.display='none';$('recording-status').style.display='none';if(chunks.length===0){rv();return;}if(sendingVoice)return;sendingVoice=true;var blob=new Blob(chunks,{type:'audio/webm'});var c=chars.find(function(x){return x.id===cid;});var path='v_'+Date.now()+'.webm';var up=await db.storage.from('voice_messages').upload(path,blob,{contentType:'audio/webm',cacheControl:'3600'});if(up.error){alert('Upload failed.');rv();sendingVoice=false;return;}var url=db.storage.from('voice_messages').getPublicUrl(path);var ins=await db.from('messages').insert({location_id:cl,char_id:cid,char_name:c.name,audio_url:url.data.publicUrl,type:'chat',duration:Math.round(dur)});if(ins.error){alert('Send failed: '+ins.error.message);rv();sendingVoice=false;return;}rv();sendingVoice=false;};mr.start(100);rec=true;$('voice-btn').classList.add('recording');$('voice-btn').textContent='🔴';$('cancel-voice-btn').style.display='inline-block';$('recording-status').style.display='inline';recTimer=setInterval(function(){$('recording-status').textContent='🔴 '+Math.floor((Date.now()-recStart)/1000)+'s';},500);}catch(e){alert('Microphone needed.');}}
+        function st(){if(mr&&rec&&mr.state==='recording'){sendingVoice=true;mr.stop();}}
+        function cr(){if(mr&&rec){sendingVoice=false;chunks=[];var s=mr.stream;mr.onstop=function(){if(s)s.getTracks().forEach(function(t){t.stop();});clearInterval(recTimer);rv();};mr.stop();}}
+        function rv(){$('voice-btn').classList.remove('recording');$('voice-btn').textContent='🎤';$('cancel-voice-btn').style.display='none';$('recording-status').style.display='none';rec=false;}
 
-        async function sendMsg() { if(!currentLocation||!currentCharacterId)return; var t=$('chat-input').value.trim(); if(!t)return; if(/[\u4e00-\u9fff]/.test(t)){alert('English only!');return;} var c=currentCharacters.find(function(x){return x.id===currentCharacterId;}); await db.from('messages').insert({location_id:currentLocation,char_id:currentCharacterId,char_name:c.name,text:t,type:'chat'}); $('chat-input').value=''; }
+        function pa(url,el){if(cAudio){cAudio.pause();if(cAudioMsg){cAudioMsg.classList.remove('playing');cAudioMsg.querySelector('.play-icon').textContent='▶';cAudioMsg.querySelector('.progress-fill').style.width='0%';}if(cAudioMsg===el){cAudio=null;cAudioMsg=null;return;}}var a=new Audio(url);cAudio=a;cAudioMsg=el;el.classList.add('playing');el.querySelector('.play-icon').textContent='⏸';var pf=el.querySelector('.progress-fill');var td=parseFloat(el.dataset.dur)||0;a.ontimeupdate=function(){if(a.duration&&td>0)pf.style.width=Math.min((a.currentTime/td)*100,100)+'%';};a.onended=function(){el.classList.remove('playing');el.querySelector('.play-icon').textContent='▶';pf.style.width='0%';cAudio=null;cAudioMsg=null;};a.onerror=function(){el.querySelector('.play-icon').textContent='⚠️';};a.play().catch(function(){el.querySelector('.play-icon').textContent='▶';});}
 
-        async function startRec() { if(!currentLocation||!currentCharacterId){alert('Enter a location first.');return;} if(isRecording||isSendingVoice)return; try{var stream=await navigator.mediaDevices.getUserMedia({audio:true}); mediaRecorder=new MediaRecorder(stream,{mimeType:'audio/webm;codecs=opus'}); audioChunks=[]; recordingStartTime=Date.now(); isSendingVoice=false; mediaRecorder.ondataavailable=function(e){if(e.data.size>0)audioChunks.push(e.data);}; mediaRecorder.onstop=async function(){ stream.getTracks().forEach(function(t){t.stop();}); clearInterval(recordingTimer); var dur=(Date.now()-recordingStartTime)/1000; $('cancel-voice-btn').style.display='none'; $('recording-status').style.display='none'; if(audioChunks.length===0){resetVoice();return;} if(isSendingVoice)return; isSendingVoice=true; var blob=new Blob(audioChunks,{type:'audio/webm'}); var c=currentCharacters.find(function(x){return x.id===currentCharacterId;}); var path='v_'+Date.now()+'.webm'; var up=await db.storage.from('voice_messages').upload(path,blob,{contentType:'audio/webm',cacheControl:'3600'}); if(up.error){alert('Upload failed.');resetVoice();isSendingVoice=false;return;} var url=db.storage.from('voice_messages').getPublicUrl(path); await db.from('messages').insert({location_id:currentLocation,char_id:currentCharacterId,char_name:c.name,audio_url:url.data.publicUrl,type:'chat',duration:Math.round(dur)}); resetVoice(); isSendingVoice=false; }; mediaRecorder.start(100); isRecording=true; $('voice-btn').classList.add('recording'); $('voice-btn').textContent='🔴'; $('cancel-voice-btn').style.display='inline-block'; $('recording-status').style.display='inline'; recordingTimer=setInterval(function(){$('recording-status').textContent='🔴 '+Math.floor((Date.now()-recordingStartTime)/1000)+'s';},500); }catch(e){alert('Microphone needed.');} }
-        function stopRec() { if(mediaRecorder&&isRecording&&mediaRecorder.state==='recording'){isSendingVoice=true;mediaRecorder.stop();} }
-        function cancelRec() { if(mediaRecorder&&isRecording){isSendingVoice=false;audioChunks=[];var s=mediaRecorder.stream;mediaRecorder.onstop=function(){if(s)s.getTracks().forEach(function(t){t.stop();});clearInterval(recordingTimer);resetVoice();};mediaRecorder.stop();} }
-        function resetVoice() { $('voice-btn').classList.remove('recording'); $('voice-btn').textContent='🎤'; $('cancel-voice-btn').style.display='none'; $('recording-status').style.display='none'; isRecording=false; }
+        function sc(cid2){var c=cid2?chars.find(function(x){return x.id===cid2;}):chars.find(function(x){return x.id===cid;});if(!c)return;$('character-card-content').innerHTML='<div style="text-align:center;margin-bottom:12px;"><img src="'+(c.avatar_url||av(c.name))+'" style="width:60px;height:60px;border-radius:50%;background:#333;"><h3 style="color:var(--gold);margin-top:6px;">'+esc(c.name)+'</h3></div><p><strong>Identity:</strong> '+esc(c.identity)+'</p><p><strong>Occupation:</strong> '+esc(c.job)+'</p><p><strong>Age:</strong> '+c.age+'</p><p><strong>Reason:</strong> '+esc(c.reason)+'</p>';$('modal-character-card').classList.remove('hidden');}
+        function rs(){var s=['cat','dog','fox','owl','bear','wolf','raven','lynx','hawk','deer'];return s[Math.floor(Math.random()*s.length)]+Math.floor(Math.random()*1000);}
+        function ua(){$('avatar-preview').src=av($('char-avatar-seed').value.trim()||$('char-name').value.trim()||'wanderer');}
+        async function sc2(){var n=$('char-name').value.trim(),id=$('char-identity').value.trim(),j=$('char-job').value.trim(),a=parseInt($('char-age').value),r=$('char-reason').value.trim();var sd=$('char-avatar-seed').value.trim()||n||rs();var avt=av(sd);if(!n||!id||!j||!a||!r)return alert('All fields required.');if(/[\u4e00-\u9fff]/.test(n+id+j+r))return alert('English only!');var res=await db.from('characters').insert({name:n,identity:id,job:j,age:a,reason:r,avatar_url:avt,alive:true}).select().single();if(res.data){cid=res.data.id;localStorage.setItem('liars_world_current_char',res.data.id);await lc();$('modal-character').classList.add('hidden');uu();rl();ou();}}
 
-        function playAudio(url,el) { if(currentAudio){currentAudio.pause();if(currentAudioMsg){currentAudioMsg.classList.remove('playing');currentAudioMsg.querySelector('.play-icon').textContent='▶';currentAudioMsg.querySelector('.progress-fill').style.width='0%';}if(currentAudioMsg===el){currentAudio=null;currentAudioMsg=null;return;}} var a=new Audio(url); currentAudio=a; currentAudioMsg=el; el.classList.add('playing'); el.querySelector('.play-icon').textContent='⏸'; var pf=el.querySelector('.progress-fill'); var td=parseFloat(el.dataset.dur)||0; a.ontimeupdate=function(){if(a.duration&&td>0)pf.style.width=Math.min((a.currentTime/td)*100,100)+'%';}; a.onended=function(){el.classList.remove('playing');el.querySelector('.play-icon').textContent='▶';pf.style.width='0%';currentAudio=null;currentAudioMsg=null;}; a.onerror=function(){el.querySelector('.play-icon').textContent='⚠️';}; a.play().catch(function(){el.querySelector('.play-icon').textContent='▶';}); }
+        function op(cid2,mid){var c=chars.find(function(x){return x.id===cid2;});$('report-target-display').textContent='Reporting: '+(c?c.name:'Unknown');$('modal-report').dataset.charId=cid2;$('modal-report').dataset.msgId=mid;$('report-reason').value='';$('modal-report').classList.remove('hidden');}
+        async function sr2(){var r=$('report-reason').value.trim();if(!r)return alert('Explain.');await db.from('reports').insert({reported_char_id:$('modal-report').dataset.charId,reporter_char_id:cid,reason:r,status:'pending'});$('modal-report').classList.add('hidden');ban('Report submitted.');ug();}
+        async function hr(rid,act){if(!isAdmin)return alert('Guide only.');var rr=await db.from('reports').select('*').eq('id',rid).single();var r=rr.data;if(!r||r.status!=='pending')return;if(act==='approve'){await db.from('reports').update({status:'approved',reporter_feedback:'Upheld.',reported_feedback:'Executed.'}).eq('id',rid);await db.from('characters').update({alive:false}).eq('id',r.reported_char_id);var c=chars.find(function(x){return x.id===r.reported_char_id;});await db.from('graveyard').insert({char_id:r.reported_char_id,char_name:c?c.name:'Unknown',reason:r.reason});if(cid===r.reported_char_id){cid=null;uu();}ban('💀 '+(c?c.name:'Someone')+' executed.');}else{await db.from('reports').update({status:'rejected',reporter_feedback:'Dismissed.',reported_feedback:'Dismissed.'}).eq('id',rid);ban('Dismissed.');}await lc();ug();uv();}
 
-        function showCard(cid) { var c=cid?currentCharacters.find(function(x){return x.id===cid;}):currentCharacters.find(function(x){return x.id===currentCharacterId;}); if(!c)return; $('character-card-content').innerHTML='<div style="text-align:center;margin-bottom:12px;"><img src="'+(c.avatar_url||avatarUrl(c.name))+'" style="width:60px;height:60px;border-radius:50%;background:#333;"><h3 style="color:var(--gold);margin-top:6px;">'+esc(c.name)+'</h3></div><p><strong>Identity:</strong> '+esc(c.identity)+'</p><p><strong>Occupation:</strong> '+esc(c.job)+'</p><p><strong>Age:</strong> '+c.age+'</p><p><strong>Reason:</strong> '+esc(c.reason)+'</p>'; $('modal-character-card').classList.remove('hidden'); }
-        function randSeed() { var s=['cat','dog','fox','owl','bear','wolf','raven','lynx','hawk','deer','bat','moth','crow','frog','newt']; return s[Math.floor(Math.random()*s.length)]+Math.floor(Math.random()*1000); }
-        function updAv() { $('avatar-preview').src=avatarUrl($('char-avatar-seed').value.trim()||$('char-name').value.trim()||'wanderer'); }
-        async function subChar() { var n=$('char-name').value.trim(), id=$('char-identity').value.trim(), j=$('char-job').value.trim(), a=parseInt($('char-age').value), r=$('char-reason').value.trim(); var sd=$('char-avatar-seed').value.trim()||n||randSeed(); var av=avatarUrl(sd); if(!n||!id||!j||!a||!r)return alert('All fields required.'); if(/[\u4e00-\u9fff]/.test(n+id+j+r))return alert('English only!'); var res=await db.from('characters').insert({name:n,identity:id,job:j,age:a,reason:r,avatar_url:av,alive:true}).select().single(); if(res.data){currentCharacterId=res.data.id;localStorage.setItem('liars_world_current_char',res.data.id);await loadChars();$('modal-character').classList.add('hidden');updateUI();renderLocs();onlineUpdate();} }
+        async function ug(){var r=await db.from('reports').select('*').eq('status','pending').order('created_at',{ascending:false});$('report-count').textContent=r.data?r.data.length:0;if(!r.data||!r.data.length){$('report-list').innerHTML='<p>No pending reports.</p>';return;}$('report-list').innerHTML=r.data.map(function(x){return '<div style="background:#111;padding:6px;margin-bottom:4px;border-radius:3px;font-size:.75em;"><div><b>Target:</b> '+esc(x.reported_char_id)+'</div><div><b>By:</b> '+esc(x.reporter_char_id)+'</div><div><b>Flaw:</b> '+esc(x.reason)+'</div><div style="margin-top:4px;display:flex;gap:4px;"><button data-report="'+x.id+'" data-action="approve" class="btn small danger">💀</button><button data-report="'+x.id+'" data-action="reject" class="btn small">✅</button></div></div>';}).join('');}
+        async function uv(){var r=await db.from('graveyard').select('*').order('death_time',{ascending:false});$('grave-count').textContent=r.data?r.data.length:0;if(!r.data||!r.data.length){$('tombstone-list').innerHTML='<p>Empty.</p>';return;}$('tombstone-list').innerHTML=r.data.map(function(g){var rem=Math.max(0,600-Math.floor((Date.now()-new Date(g.death_time).getTime())/1000));var can=rem<=0;return '<div style="padding:4px 0;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;gap:6px;"><span>🪦 '+esc(g.char_name)+'</span><span style="font-size:.65em;">'+(can?'🌱':Math.floor(rem/60)+':'+(rem%60+'').padStart(2,'0'))+'</span>'+(can?'<button data-revive="'+g.char_id+'" data-grave="'+g.id+'" style="background:var(--success);color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:.65em;">Return</button>':'')+'</div>';}).join('');}
+        function al(){if($('admin-password').value===ADMIN_PASSWORD){isAdmin=true;$('admin-login').classList.add('hidden');$('admin-content').classList.remove('hidden');pa2();ban('Admin granted.');}else{alert('Wrong password.');}}
+        function pa2(){$('admin-task-location').innerHTML='<option value="all">All</option>'+LOCATIONS.map(function(l){return '<option value="'+l.id+'">'+l.icon+' '+l.name+'</option>';}).join('');$('admin-force-execute').innerHTML='<option value="">-- Select --</option>'+chars.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+' ('+esc(c.identity)+')</option>';}).join('');}
+        async function st2(){if(!isAdmin)return;var l=$('admin-task-location').value,t=$('admin-task-text').value.trim();if(!t)return alert('Enter task.');await db.from('daily_tasks').update({active:false}).eq('active',true);await db.from('daily_tasks').insert({location_id:l,task_text:t,active:true});ban('Task published!');$('admin-task-text').value='';lt();}
+        async function fe(){if(!isAdmin)return;var cid2=$('admin-force-execute').value;if(!cid2)return;var c=chars.find(function(x){return x.id===cid2;});await db.from('characters').update({alive:false}).eq('id',cid2);await db.from('graveyard').insert({char_id:cid2,char_name:c?c.name:'Unknown',reason:'Force executed.'});await lc();uv();pa2();if(cid===cid2){cid=null;uu();}ban('💀 '+(c?c.name:cid2));}
+        async function dv(){if(!isAdmin)return;var mid=$('admin-delete-voice').value.trim();if(!mid)return alert('Enter ID.');var r=await db.from('messages').select('*').eq('id',mid).single();if(r.data&&r.data.audio_url){var p=r.data.audio_url.split('/').pop();await db.storage.from('voice_messages').remove([p]);}await db.from('messages').delete().eq('id',mid);ban('Deleted.');$('admin-delete-voice').value='';if(cl)lm();}
+        function ao(){isAdmin=false;$('admin-login').classList.remove('hidden');$('admin-content').classList.add('hidden');$('admin-password').value='';ban('Logged out.');}
 
-        function openReport(cid,mid) { var c=currentCharacters.find(function(x){return x.id===cid;}); $('report-target-display').textContent='Reporting: '+(c?c.name:'Unknown'); $('modal-report').dataset.charId=cid; $('modal-report').dataset.msgId=mid; $('report-reason').value=''; $('modal-report').classList.remove('hidden'); }
-        async function subReport() { var r=$('report-reason').value.trim(); if(!r)return alert('Explain the flaw.'); await db.from('reports').insert({reported_char_id:$('modal-report').dataset.charId,reporter_char_id:currentCharacterId,reason:r,status:'pending'}); $('modal-report').classList.add('hidden'); banner('Report submitted.'); upGuide(); }
-        async function handleRep(rid,act) { if(!isAdmin)return alert('Guide only.'); var rr=await db.from('reports').select('*').eq('id',rid).single(); var r=rr.data; if(!r||r.status!=='pending')return; if(act==='approve'){ await db.from('reports').update({status:'approved',reporter_feedback:'Upheld.',reported_feedback:'Executed.'}).eq('id',rid); await db.from('characters').update({alive:false}).eq('id',r.reported_char_id); var c=currentCharacters.find(function(x){return x.id===r.reported_char_id;}); await db.from('graveyard').insert({char_id:r.reported_char_id,char_name:c?c.name:'Unknown',reason:r.reason}); if(currentCharacterId===r.reported_char_id){currentCharacterId=null;updateUI();} banner('💀 '+(c?c.name:'Someone')+' executed.'); } else { await db.from('reports').update({status:'rejected',reporter_feedback:'Dismissed.',reported_feedback:'Dismissed.'}).eq('id',rid); banner('Dismissed.'); } await loadChars(); upGuide(); upGrave(); }
-
-        async function upGuide() { var r=await db.from('reports').select('*').eq('status','pending').order('created_at',{ascending:false}); $('report-count').textContent=r.data?r.data.length:0; if(!r.data||!r.data.length){$('report-list').innerHTML='<p>No pending reports.</p>';return;} $('report-list').innerHTML=r.data.map(function(x){return '<div style="background:#111;padding:6px;margin-bottom:4px;border-radius:3px;font-size:0.75em;"><div><b>Target:</b> '+esc(x.reported_char_id)+'</div><div><b>By:</b> '+esc(x.reporter_char_id)+'</div><div><b>Flaw:</b> '+esc(x.reason)+'</div><div style="margin-top:4px;display:flex;gap:4px;"><button data-report="'+x.id+'" data-action="approve" class="btn small danger">💀</button><button data-report="'+x.id+'" data-action="reject" class="btn small">✅</button></div></div>';}).join(''); }
-        async function upGrave() { var r=await db.from('graveyard').select('*').order('death_time',{ascending:false}); $('grave-count').textContent=r.data?r.data.length:0; if(!r.data||!r.data.length){$('tombstone-list').innerHTML='<p>Empty.</p>';return;} $('tombstone-list').innerHTML=r.data.map(function(g){var rem=Math.max(0,600-Math.floor((Date.now()-new Date(g.death_time).getTime())/1000)); var can=rem<=0; return '<div style="padding:4px 0;border-bottom:1px solid #333;display:flex;justify-content:space-between;align-items:center;gap:6px;"><span>🪦 '+esc(g.char_name)+'</span><span style="font-size:0.65em;">'+(can?'🌱':Math.floor(rem/60)+':'+(rem%60+'').padStart(2,'0'))+'</span>'+(can?'<button data-revive="'+g.char_id+'" data-grave="'+g.id+'" style="background:var(--success);color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:0.65em;">Return</button>':'')+'</div>';}).join(''); }
-        function admLogin() { if($('admin-password').value===ADMIN_PASSWORD){isAdmin=true;$('admin-login').classList.add('hidden');$('admin-content').classList.remove('hidden');popAdm();banner('Admin granted.');}else{alert('Wrong password.');} }
-        function popAdm() { $('admin-task-location').innerHTML='<option value="all">All</option>'+LOCATIONS.map(function(l){return '<option value="'+l.id+'">'+l.icon+' '+l.name+'</option>';}).join(''); $('admin-force-execute').innerHTML='<option value="">-- Select --</option>'+currentCharacters.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+' ('+esc(c.identity)+')</option>';}).join(''); }
-        async function setTask() { if(!isAdmin)return; var l=$('admin-task-location').value, t=$('admin-task-text').value.trim(); if(!t)return alert('Enter task.'); await db.from('daily_tasks').update({active:false}).eq('active',true); await db.from('daily_tasks').insert({location_id:l,task_text:t,active:true}); banner('Task published!'); $('admin-task-text').value=''; loadTask(); }
-        async function forceEx() { if(!isAdmin)return; var cid=$('admin-force-execute').value; if(!cid)return; var c=currentCharacters.find(function(x){return x.id===cid;}); await db.from('characters').update({alive:false}).eq('id',cid); await db.from('graveyard').insert({char_id:cid,char_name:c?c.name:'Unknown',reason:'Force executed.'}); await loadChars(); upGrave(); popAdm(); if(currentCharacterId===cid){currentCharacterId=null;updateUI();} banner('💀 '+ (c?c.name:cid)); }
-        async function delVoice() { if(!isAdmin)return; var mid=$('admin-delete-voice').value.trim(); if(!mid)return alert('Enter message ID.'); var r=await db.from('messages').select('*').eq('id',mid).single(); if(r.data&&r.data.audio_url){var p=r.data.audio_url.split('/').pop(); await db.storage.from('voice_messages').remove([p]);} await db.from('messages').delete().eq('id',mid); banner('Deleted.'); $('admin-delete-voice').value=''; if(currentLocation)loadMsgs(); }
-        function admLogout() { isAdmin=false; $('admin-login').classList.remove('hidden'); $('admin-content').classList.add('hidden'); $('admin-password').value=''; banner('Logged out.'); }
-
-        function updateUI() { updateSpk(); var c=currentCharacters.find(function(x){return x.id===currentCharacterId;}); var d=$('current-role-display'); if(c){d.innerHTML='<img src="'+(c.avatar_url||avatarUrl(c.name))+'" onerror="this.src=\''+avatarUrl('fb')+'\'"> '+esc(c.name);d.style.color='#c9a96e';}else{d.innerHTML='👤 Not in character';d.style.color='#8b7d6b';} var act=!!(currentCharacterId&&currentLocation); $('chat-input').disabled=!act; $('send-btn').disabled=!act; $('voice-btn').disabled=!act; }
-        function updateSpk() { $('speak-as').innerHTML='<option value="">-- Speak as... --</option>'+currentCharacters.map(function(c){return '<option value="'+c.id+'"'+(c.id===currentCharacterId?' selected':'')+'>'+esc(c.name)+'</option>';}).join(''); }
-        async function checkGrave() { var r=await db.from('graveyard').select('*').eq('revivable',false); if(!r.data)return; for(var i=0;i<r.data.length;i++){var g=r.data[i]; if((Date.now()-new Date(g.death_time).getTime())>600000) await db.from('graveyard').update({revivable:true}).eq('id',g.id);} }
+        function uu(){us();var c=chars.find(function(x){return x.id===cid;});var d=$('current-role-display');if(c){d.innerHTML='<img src="'+(c.avatar_url||av(c.name))+'" onerror="this.src=\''+av('fb')+'\'"> '+esc(c.name);d.style.color='#c9a96e';}else{d.innerHTML='👤 Not in character';d.style.color='#8b7d6b';}var act=!!(cid&&cl);$('chat-input').disabled=!act;$('send-btn').disabled=!act;$('voice-btn').disabled=!act;}
+        function us(){$('speak-as').innerHTML='<option value="">-- Speak as... --</option>'+chars.map(function(c){return '<option value="'+c.id+'"'+(c.id===cid?' selected':'')+'>'+esc(c.name)+'</option>';}).join('');}
+        async function cg(){var r=await db.from('graveyard').select('*').eq('revivable',false);if(!r.data)return;for(var i=0;i<r.data.length;i++){var g=r.data[i];if((Date.now()-new Date(g.death_time).getTime())>600000)await db.from('graveyard').update({revivable:true}).eq('id',g.id);}}
 
         document.addEventListener('click',async function(e){
-            var card=e.target.closest('.location-card'); if(card){enterLoc(card.dataset.loc);return;}
-            var vm=e.target.closest('.voice-msg'); if(vm&&!e.target.closest('.report-btn')){playAudio(vm.dataset.audio,vm);return;}
-            if(e.target.classList.contains('report-btn')){openReport(e.target.dataset.char,e.target.dataset.msg);return;}
-            if(e.target.dataset.report&&e.target.dataset.action){handleRep(e.target.dataset.report,e.target.dataset.action);return;}
-            if(e.target.dataset.revive){await db.from('graveyard').delete().eq('id',e.target.dataset.grave);await db.from('characters').delete().eq('id',e.target.dataset.revive);await loadChars();upGrave();$('modal-character').classList.remove('hidden');}
-            var sEl=e.target.closest('.sender'); if(sEl&&!e.target.closest('.voice-msg')&&!e.target.closest('.report-btn')){var mEl=sEl.closest('.message');if(mEl&&mEl.classList.contains('other')){var rb=mEl.querySelector('.report-btn');if(rb)showCard(rb.dataset.char);}}
+            var card=e.target.closest('.location-card');if(card){el(card.dataset.loc);return;}
+            var vm=e.target.closest('.voice-msg');if(vm&&!e.target.closest('.report-btn')){pa(vm.dataset.audio,vm);return;}
+            if(e.target.classList.contains('report-btn')){op(e.target.dataset.char,e.target.dataset.msg);return;}
+            if(e.target.dataset.report&&e.target.dataset.action){hr(e.target.dataset.report,e.target.dataset.action);return;}
+            if(e.target.dataset.revive){await db.from('graveyard').delete().eq('id',e.target.dataset.grave);await db.from('characters').delete().eq('id',e.target.dataset.revive);await lc();uv();$('modal-character').classList.remove('hidden');}
+            var sEl=e.target.closest('.sender');if(sEl&&!e.target.closest('.voice-msg')&&!e.target.closest('.report-btn')){var mEl=sEl.closest('.message');if(mEl&&mEl.classList.contains('other')){var rb=mEl.querySelector('.report-btn');if(rb)sc(rb.dataset.char);}}
         });
 
-        $('btn-create-char').onclick=function(){$('char-avatar-seed').value=randSeed();updAv();['char-name','char-identity','char-job','char-age','char-reason'].forEach(function(id){$(id).value='';});$('modal-character').classList.remove('hidden');};
-        $('btn-random-avatar').onclick=function(){$('char-avatar-seed').value=randSeed();updAv();};
-        $('char-avatar-seed').oninput=updAv; $('char-name').oninput=updAv;
+        $('btn-create-char').onclick=function(){$('char-avatar-seed').value=rs();ua();['char-name','char-identity','char-job','char-age','char-reason'].forEach(function(id){$(id).value='';});$('modal-character').classList.remove('hidden');};
+        $('btn-random-avatar').onclick=function(){$('char-avatar-seed').value=rs();ua();};
+        $('char-avatar-seed').oninput=ua;$('char-name').oninput=ua;
         $('btn-cancel-char').onclick=function(){$('modal-character').classList.add('hidden');};
-        $('btn-submit-char').onclick=subChar;
+        $('btn-submit-char').onclick=sc2;
         $('btn-cancel-report').onclick=function(){$('modal-report').classList.add('hidden');};
-        $('btn-submit-report').onclick=subReport;
+        $('btn-submit-report').onclick=sr2;
         $('btn-close-card').onclick=function(){$('modal-character-card').classList.add('hidden');};
-        $('btn-online').onclick=function(){$('online-panel').classList.toggle('hidden');loadOnline();};
+        $('btn-online').onclick=function(){$('online-panel').classList.toggle('hidden');lo();};
         $('btn-graveyard').onclick=function(){$('graveyard').classList.toggle('hidden');};
         $('btn-guide').onclick=function(){$('guide-panel').classList.toggle('hidden');};
-        $('btn-admin').onclick=function(){$('admin-panel').classList.toggle('hidden');if(!isAdmin){$('admin-login').classList.remove('hidden');$('admin-content').classList.add('hidden');}else{popAdm();}};
-        $('btn-admin-login').onclick=admLogin;
-        $('admin-password').onkeydown=function(e){if(e.key==='Enter')admLogin();};
-        $('btn-set-task').onclick=setTask;
-        $('btn-force-execute').onclick=forceEx;
-        $('btn-delete-voice').onclick=delVoice;
-        $('btn-admin-logout').onclick=admLogout;
-        $('send-btn').onclick=sendMsg;
-        $('chat-input').onkeydown=function(e){if(e.key==='Enter')sendMsg();};
+        $('btn-admin').onclick=function(){$('admin-panel').classList.toggle('hidden');if(!isAdmin){$('admin-login').classList.remove('hidden');$('admin-content').classList.add('hidden');}else{pa2();}};
+        $('btn-admin-login').onclick=al;
+        $('admin-password').onkeydown=function(e){if(e.key==='Enter')al();};
+        $('btn-set-task').onclick=st2;
+        $('btn-force-execute').onclick=fe;
+        $('btn-delete-voice').onclick=dv;
+        $('btn-admin-logout').onclick=ao;
+        $('send-btn').onclick=sm;
+        $('chat-input').onkeydown=function(e){if(e.key==='Enter')sm();};
 
-        $('voice-btn').addEventListener('mousedown',function(e){e.preventDefault();startRec();});
-        $('voice-btn').addEventListener('mouseup',function(e){e.preventDefault();stopRec();});
-        $('voice-btn').addEventListener('mouseleave',function(e){if(isRecording)stopRec();});
-        $('voice-btn').addEventListener('touchstart',function(e){e.preventDefault();startRec();});
-        $('voice-btn').addEventListener('touchend',function(e){e.preventDefault();stopRec();});
-        $('cancel-voice-btn').addEventListener('click',cancelRec);
+        $('voice-btn').addEventListener('mousedown',function(e){e.preventDefault();sr();});
+        $('voice-btn').addEventListener('mouseup',function(e){e.preventDefault();st();});
+        $('voice-btn').addEventListener('mouseleave',function(e){if(rec)st();});
+        $('voice-btn').addEventListener('touchstart',function(e){e.preventDefault();sr();});
+        $('voice-btn').addEventListener('touchend',function(e){e.preventDefault();st();});
+        $('cancel-voice-btn').addEventListener('click',cr);
         $('cancel-voice-btn').addEventListener('mousedown',function(e){e.preventDefault();});
 
-        $('speak-as').onchange=function(){currentCharacterId=this.value||null;if(currentCharacterId)localStorage.setItem('liars_world_current_char',currentCharacterId);else localStorage.removeItem('liars_world_current_char');updateUI();onlineUpdate();};
-        window.addEventListener('beforeunload',function(){if(currentCharacterId)db.from('online_players').delete().eq('char_id',currentCharacterId);});
+        $('speak-as').onchange=function(){cid=this.value||null;if(cid)localStorage.setItem('liars_world_current_char',cid);else localStorage.removeItem('liars_world_current_char');uu();ou();};
+        window.addEventListener('beforeunload',function(){if(cid)db.from('online_players').delete().eq('char_id',cid);});
 
-        (async function init(){
-            await loadChars(); await loadTask(); renderLocs(); updateSpk(); upGrave(); upGuide(); loadOnline(); subAll();
-            setInterval(checkGrave,5000);
-            var sv=localStorage.getItem('liars_world_current_char');
-            if(sv&&currentCharacters.find(function(c){return c.id===sv&&c.alive;})){currentCharacterId=sv;updateUI();onlineUpdate();}
-            console.log('✅ Ready');
-        })();
+        (async function init(){await lc();await lt();rl();us();uv();ug();lo();sub();setInterval(cg,5000);var sv=localStorage.getItem('liars_world_current_char');if(sv&&chars.find(function(c){return c.id===sv&&c.alive;})){cid=sv;uu();ou();}console.log('✅ Ready');})();
     })();
     </script>
 </body>
