@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Liar's World</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --panel: #16213e;
+            --border: #0f3460;
+            --gold: #c9a96e;
+            --text: #e0d5c1;
+            --text-dark: #8b7d6b;
+            --danger: #8b3a3a;
+            --success: #3a6b3a;
+            --highlight: #2a4a7f;
+            --chat-bg: #0d1b2a;
+            --input-bg: #1c2a3a;
+            --recording: #cc3333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+        #top-bar {
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        #top-bar h1 {
+            font-size: 1.1em;
+            letter-spacing: 2px;
+            color: var(--gold);
+        }
+        #user-area {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        #current-role-display {
+            background: var(--highlight);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75em;
+        }
+        .btn {
+            background: var(--border);
+            color: var(--text);
+            border: 1px solid var(--gold);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.75em;
+            border-radius: 3px;
+        }
+        .btn.danger {
+            border-color: var(--danger);
+        }
+        .btn.small {
+            padding: 4px 8px;
+            font-size: 0.65em;
+        }
+        #main-container {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+        #sidebar {
+            width: 280px;
+            background: var(--panel);
+            padding: 10px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        #sidebar h2 {
+            font-size: 0.8em;
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+        .location-card {
+            background: var(--chat-bg);
+            border: 1px solid var(--border);
+            padding: 10px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .location-card.active {
+            border-color: var(--gold);
+            background: #121e32;
+        }
+        .location-card .name {
+            font-size: 0.9em;
+        }
+        .location-card .capacity {
+            font-size: 0.65em;
+            color: var(--text-dark);
+        }
+        .location-card .capacity.full {
+            color: var(--danger);
+        }
+        #chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--chat-bg);
+        }
+        #chat-header {
+            background: var(--panel);
+            padding: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        #chat-header h3 {
+            color: var(--gold);
+            font-size: 0.9em;
+        }
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .message {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            position: relative;
+        }
+        .message .sender {
+            font-size: 0.65em;
+            color: var(--gold);
+            font-weight: bold;
+        }
+        .message.own {
+            align-self: flex-end;
+            background: #1a3a5c;
+        }
+        .message.other {
+            align-self: flex-start;
+            background: #1a1a2e;
+            border: 1px solid var(--border);
+        }
+        .message.system {
+            align-self: center;
+            color: var(--text-dark);
+            font-style: italic;
+            font-size: 0.75em;
+        }
+        .report-btn {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger);
+            color: #fff;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 10px;
+            display: none;
+        }
+        .message.other:hover .report-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .audio-msg {
+            cursor: pointer;
+            background: #1a3050;
+            padding: 6px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+        }
+        #input-area {
+            padding: 10px;
+            background: var(--panel);
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        #input-area input {
+            flex: 1;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 3px;
+        }
+        #input-area select {
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 8px;
+            border-radius: 3px;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal {
+            background: var(--panel);
+            border: 1px solid var(--gold);
+            padding: 20px;
+            width: 92%;
+            max-width: 500px;
+            border-radius: 6px;
+        }
+        .modal h2 {
+            color: var(--gold);
+            margin-bottom: 10px;
+        }
+        .modal label {
+            display: block;
+            color: var(--text-dark);
+            font-size: 0.7em;
+            margin-top: 8px;
+        }
+        .modal input,
+        .modal textarea {
+            width: 100%;
+            background: var(--input-bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 8px;
+            margin-top: 4px;
+            border-radius: 3px;
+        }
+        .modal .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            justify-content: flex-end;
+        }
+        .hidden {
+            display: none !important;
+        }
+        #graveyard,
+        #guide-panel {
+            position: fixed;
+            bottom: 10px;
+            background: var(--panel);
+            padding: 10px;
+            border-radius: 6px;
+            z-index: 150;
+            font-size: 0.8em;
+            max-width: 300px;
+        }
+        #graveyard {
+            right: 10px;
+            border: 1px solid #3a2a1a;
+        }
+        #guide-panel {
+            left: 10px;
+            border: 1px solid var(--gold);
+        }
+        @media (max-width: 768px) {
+            #main-container {
+                flex-direction: column;
+            }
+            #sidebar {
+                width: 100%;
+                max-height: 160px;
+                display: flex;
+                gap: 6px;
+                overflow-x: auto;
+            }
+            #sidebar h2 {
+                display: none;
+            }
+            .location-card {
+                flex: 0 0 auto;
+                min-width: 80px;
+                text-align: center;
+                margin-bottom: 0;
+            }
+            #chat-area {
+                min-height: 50vh;
+            }
+            #graveyard,
+            #guide-panel {
+                position: static;
+                margin: 4px;
+                max-width: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="top-bar">
+        <h1>Liar's World</h1>
+        <div id="user-area">
+            <span id="current-role-display">👤 Not in character</span>
+            <button class="btn small" id="btn-create-char">+ New</button>
+            <button class="btn small danger" id="btn-graveyard">🪦 <span id="grave-count">0</span></button>
+            <button class="btn small" id="btn-guide">⚖️ <span id="report-count">0</span></button>
+        </div>
+    </div>
+    <div id="main-container">
+        <div id="sidebar">
+            <h2>📍 Village</h2>
+            <div id="location-list" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+        <div id="chat-area">
+            <div id="chat-header"><h3 id="chat-title">Select a location</h3></div>
+            <div id="messages"><div class="message system">Welcome to Liar's World.</div></div>
+            <div id="input-area">
+                <select id="speak-as"><option value="">-- Speak as... --</option></select>
+                <input type="text" id="chat-input" placeholder="English only..." disabled>
+                <button class="btn" id="voice-btn" disabled>🎤</button>
+                <button class="btn" id="send-btn" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+    <div id="graveyard" class="hidden"><h4>🪦 Graveyard</h4><div id="tombstone-list"></div></div>
+    <div id="guide-panel" class="hidden"><h4>⚖️ Reports</h4><div id="report-list"></div></div>
+    <div id="modal-character" class="modal-overlay hidden">
+        <div class="modal">
+            <h2>Create Your Lie</h2>
+            <label>Name</label><input type="text" id="char-name" placeholder="e.g. Elias Thornwood">
+            <label>Identity</label><input type="text" id="char-identity" placeholder="e.g. Wandering Merchant">
+            <label>Occupation</label><input type="text" id="char-job" placeholder="e.g. Blacksmith">
+            <label>Age</label><input type="number" id="char-age" placeholder="e.g. 34" min="16" max="120">
+            <label>Reason for Coming</label><textarea id="char-reason" placeholder="Why are you here...?"></textarea>
+            <div class="btn-row"><button class="btn" id="btn-cancel-char">Cancel</button><button class="btn" id="btn-submit-char">Enter Village</button></div>
+        </div>
+    </div>
+    <div id="modal-report" class="modal-overlay hidden">
+        <div class="modal">
+            <h2>Report Flaw</h2>
+            <label>What's the contradiction?</label><textarea id="report-reason" placeholder="Explain..."></textarea>
+            <p id="report-target-display"></p>
+            <div class="btn-row"><button class="btn" id="btn-cancel-report">Cancel</button><button class="btn danger" id="btn-submit-report">Submit</button></div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════
+        //  LIAR'S WORLD — 完整引擎
+        // ═══════════════════════════════════
+
+        (function() {
+            const SUPABASE_URL = 'https://jhxvmwdrqwfakeaptbdt.supabase.co';
+            const SUPABASE_ANON_KEY =
+                'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpoeHZtd2RycXdmYWtlYXB0YmR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxNzk0MzYsImV4cCI6MjA5NDc1NTQzNn0.NJ0zwaGze_YoKCG9etfsVk8ERZiVMkO-M0sMQpWhnRE';
+
+            const { createClient } = supabase;
+            const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            const LOCATIONS = [
+                { id: 'teahouse', name: 'Tea House', icon: '🍵', capacity: 8 },
+                { id: 'tavern', name: 'Tavern', icon: '🍺', capacity: 8 },
+                { id: 'restaurant', name: 'Restaurant', icon: '🍽️', capacity: 6 },
+                { id: 'casino', name: 'Casino', icon: '🎲', capacity: 6 },
+                { id: 'farm', name: 'Farm', icon: '🌾', capacity: 2 },
+                { id: 'dirtroad', name: 'Dirt Road', icon: '🛤️', capacity: 1 },
+                { id: 'chiefhouse', name: "Chief's House", icon: '🏛️', capacity: 3 },
+            ];
+
+            let currentLocation = null;
+            let currentCharacterId = null;
+            let currentCharacters = [];
+            let mediaRecorder = null;
+            let audioChunks = [];
+            let isRecording = false;
+
+            // DOM 缓存
+            const $ = (id) => document.getElementById(id);
+            const $locationList = $('location-list');
+            const $chatTitle = $('chat-title');
+            const $messages = $('messages');
+            const $speakAs = $('speak-as');
+            const $chatInput = $('chat-input');
+            const $sendBtn = $('send-btn');
+            const $voiceBtn = $('voice-btn');
+            const $roleDisplay = $('current-role-display');
+            const $graveCount = $('grave-count');
+            const $reportCount = $('report-count');
+            const $tombstoneList = $('tombstone-list');
+            const $reportList = $('report-list');
+            const $modalChar = $('modal-character');
+            const $modalReport = $('modal-report');
+
+            function esc(str) {
+                const d = document.createElement('div');
+                d.textContent = str || '';
+                return d.innerHTML;
+            }
+
+            async function loadCharacters() {
+                const { data } = await db.from('characters').select('*').eq('alive', true);
+                if (data) currentCharacters = data;
+            }
+
+            function renderLocations() {
+                $locationList.innerHTML = LOCATIONS.map(loc => {
+                    const count = (currentLocation === loc.id && currentCharacterId) ? 1 : 0;
+                    const isFull = count >= loc.capacity;
+                    return `<div class="location-card${currentLocation===loc.id?' active':''}" data-loc="${loc.id}">
+                <span>${loc.icon}</span> <span class="name">${loc.name}</span>
+                <span class="capacity${isFull?' full':''}">${count}/${loc.capacity}</span></div>`;
+                }).join('');
+            }
+
+            function enterLocation(locId) {
+                currentLocation = locId;
+                const loc = LOCATIONS.find(l => l.id === locId);
+                $chatTitle.textContent = `${loc.icon} ${loc.name}`;
+                renderLocations();
+                loadMessages();
+                updateUI();
+            }
+
+            async function loadMessages() {
+                if (!currentLocation) return;
+                const { data } = await db.from('messages').select('*').eq('location_id', currentLocation).order(
+                    'created_at', { ascending: true }).limit(50);
+                renderMessages(data || []);
+            }
+
+            function renderMessages(msgs) {
+                if (!msgs.length) {
+                    $messages.innerHTML = '<div class="message system">Silence. Speak in English.</div>';
+                    return;
+                }
+                $messages.innerHTML = msgs.map(m => {
+                    if (m.type === 'system') return `<div class="message system">${esc(m.text)}</div>`;
+                    const isOwn = m.char_id === currentCharacterId;
+                    let content = m.audio_url ?
+                        `<div class="audio-msg" data-audio="${m.audio_url}">🔊 Voice ▶</div>` :
+                        `<div>${esc(m.text)}</div>`;
+                    return `<div class="message ${isOwn?'own':'other'}"><div class="sender">${esc(m.char_name)}</div>${content}${isOwn?'':`<button class="report-btn" data-char="${m.char_id}" data-msg="${m.id}">!</button>`}</div>`;
+                }).join('');
+                $messages.scrollTop = $messages.scrollHeight;
+            }
+
+            function subscribeAll() {
+                db.channel('public:messages').on('postgres_changes', { event: 'INSERT', schema: 'public',
+                    table: 'messages' }, payload => {
+                    if (payload.new.location_id === currentLocation) {
+                        const m = payload.new;
+                        const isOwn = m.char_id === currentCharacterId;
+                        let content = m.audio_url ?
+                            `<div class="audio-msg" data-audio="${m.audio_url}">🔊 Voice ▶</div>` :
+                            `<div>${esc(m.text)}</div>`;
+                        $messages.insertAdjacentHTML('beforeend',
+                            `<div class="message ${isOwn?'own':'other'}"><div class="sender">${esc(m.char_name)}</div>${content}${isOwn?'':`<button class="report-btn" data-char="${m.char_id}" data-msg="${m.id}">!</button>`}</div>`
+                            );
+                        $messages.scrollTop = $messages.scrollHeight;
+                    }
+                }).subscribe();
+                db.channel('public:reports').on('postgres_changes', { event: '*', schema: 'public',
+                    table: 'reports' }, updateGuidePanel).subscribe();
+                db.channel('public:graveyard').on('postgres_changes', { event: '*', schema: 'public',
+                    table: 'graveyard' }, updateGraveyard).subscribe();
+            }
+
+            async function sendMessage() {
+                if (!currentLocation || !currentCharacterId) return;
+                const text = $chatInput.value.trim();
+                if (!text) return;
+                if (/[\u4e00-\u9fff]/.test(text)) { alert('English only!'); return; }
+                const char = currentCharacters.find(c => c.id === currentCharacterId);
+                await db.from('messages').insert({ location_id: currentLocation, char_id: currentCharacterId,
+                    char_name: char.name, text });
+                $chatInput.value = '';
+            }
+
+            async function startRecording() {
+                if (!currentLocation || !currentCharacterId) return;
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = async () => {
+                        stream.getTracks().forEach(t => t.stop());
+                        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const char = currentCharacters.find(c => c.id === currentCharacterId);
+                        const path = 'voice_' + Date.now() + '.webm';
+                        await db.storage.from('voice_messages').upload(path, blob);
+                        const { data } = db.storage.from('voice_messages').getPublicUrl(path);
+                        await db.from('messages').insert({ location_id: currentLocation,
+                            char_id: currentCharacterId, char_name: char.name, audio_url: data
+                                .publicUrl });
+                    };
+                    mediaRecorder.start();
+                    isRecording = true;
+                    $voiceBtn.classList.add('recording');
+                    $voiceBtn.textContent = '🔴';
+                } catch (e) {
+                    alert('Microphone access needed.');
+                }
+            }
+
+            function stopRecording() {
+                if (mediaRecorder && isRecording) {
+                    mediaRecorder.stop();
+                    $voiceBtn.classList.remove('recording');
+                    $voiceBtn.textContent = '🎤';
+                    isRecording = false;
+                }
+            }
+
+            function updateUI() {
+                updateSpeakAsList();
+                const char = currentCharacters.find(c => c.id === currentCharacterId);
+                $roleDisplay.textContent = char ? '👤 ' + char.name : '👤 Not in character';
+                const active = !!(currentCharacterId && currentLocation);
+                $chatInput.disabled = !active;
+                $sendBtn.disabled = !active;
+                $voiceBtn.disabled = !active;
+            }
+
+            function updateSpeakAsList() {
+                $speakAs.innerHTML = '<option value="">-- Speak as... --</option>' + currentCharacters.map(c =>
+                    `<option value="${c.id}" ${c.id===currentCharacterId?'selected':''}>${esc(c.name)}</option>`).join(
+                    '');
+            }
+
+            async function updateGraveyard() {
+                const { data } = await db.from('graveyard').select('*').order('death_time', { ascending: false });
+                $graveCount.textContent = data ? data.length : 0;
+                if (!data || !data.length) { $tombstoneList.innerHTML =
+                    '<p>Empty... for now.</p>'; return; }
+                $tombstoneList.innerHTML = data.map(g => {
+                    const remaining = Math.max(0, 600 - Math.floor((Date.now() - new Date(g.death_time)
+                        .getTime()) / 1000));
+                    const canRevive = remaining <= 0;
+                    return `<div style="padding:4px 0;border-bottom:1px solid #333;display:flex;justify-content:space-between;">
+                <span>🪦 ${esc(g.char_name)}</span>
+                <span>${canRevive ? '🌱' : Math.floor(remaining/60)+':'+(remaining%60).toString().padStart(2,'0')}</span>
+                ${canRevive?`<button data-revive="${g.char_id}" data-grave="${g.id}" style="background:green;color:#fff;border:none;padding:2px 6px;border-radius:3px;">Return</button>`:''}
+              </div>`;
+                }).join('');
+            }
+
+            async function updateGuidePanel() {
+                const { data } = await db.from('reports').select('*').eq('status', 'pending');
+                $reportCount.textContent = data ? data.length : 0;
+                if (!data || !data.length) { $reportList.innerHTML =
+                    '<p>No pending reports.</p>'; return; }
+                $reportList.innerHTML = data.map(r => `<div style="background:#111;padding:6px;margin-bottom:4px;border-radius:3px;">
+              <div><b>Reason:</b> ${esc(r.reason)}</div>
+              <div style="margin-top:4px;">
+                <button data-report="${r.id}" data-action="approve" class="btn small danger">💀 Execute</button>
+                <button data-report="${r.id}" data-action="reject" class="btn small">✅ Dismiss</button>
+              </div></div>`).join('');
+            }
+
+            async function submitCharacter() {
+                const name = $('char-name').value.trim();
+                const identity = $('char-identity').value.trim();
+                const job = $('char-job').value.trim();
+                const age = parseInt($('char-age').value);
+                const reason = $('char-reason').value.trim();
+                if (!name || !identity || !job || !age || !reason) return alert('All fields required.');
+                const { data } = await db.from('characters').insert({ name, identity, job, age, reason,
+                    alive: true }).select().single();
+                if (data) {
+                    currentCharacterId = data.id;
+                    localStorage.setItem('liars_world_current_char', data.id);
+                    await loadCharacters();
+                    $modalChar.classList.add('hidden');
+                    updateUI();
+                    renderLocations();
+                }
+            }
+
+            function openReportModal(charId, msgId) {
+                $('report-target-display').textContent = 'Reporting: ' + charId;
+                $modalReport.dataset.charId = charId;
+                $modalReport.dataset.msgId = msgId;
+                $modalReport.classList.remove('hidden');
+            }
+
+            async function submitReport() {
+                await db.from('reports').insert({
+                    reported_char_id: $modalReport.dataset.charId,
+                    reporter_char_id: currentCharacterId,
+                    reason: $('report-reason').value,
+                    status: 'pending'
+                });
+                $modalReport.classList.add('hidden');
+            }
+
+            // 事件绑定
+            document.addEventListener('click', async (e) => {
+                const card = e.target.closest('.location-card');
+                if (card) { enterLocation(card.dataset.loc); return; }
+                if (e.target.classList.contains('audio-msg')) {
+                    new Audio(e.target.dataset.audio).play();
+                    return;
+                }
+                if (e.target.classList.contains('report-btn')) {
+                    openReportModal(e.target.dataset.char, e.target.dataset.msg);
+                    return;
+                }
+                if (e.target.dataset.report && e.target.dataset.action) {
+                    const { report, action } = e.target.dataset;
+                    const { data: r } = await db.from('reports').select('*').eq('id', report).single();
+                    if (!r || r.status !== 'pending') return;
+                    if (action === 'approve') {
+                        await db.from('reports').update({ status: 'approved' }).eq('id', report);
+                        await db.from('characters').update({ alive: false }).eq('id', r.reported_char_id);
+                        const char = currentCharacters.find(c => c.id === r.reported_char_id);
+                        await db.from('graveyard').insert({ char_id: r.reported_char_id, char_name: char?.name ||
+                                'Unknown', reason: r.reason });
+                        if (currentCharacterId === r.reported_char_id) { currentCharacterId = null;
+                            updateUI(); }
+                    } else {
+                        await db.from('reports').update({ status: 'rejected' }).eq('id', report);
+                    }
+                    await loadCharacters();
+                    updateGuidePanel();
+                    updateGraveyard();
+                    return;
+                }
+                if (e.target.dataset.revive) {
+                    const { revive, grave } = e.target.dataset;
+                    await db.from('graveyard').delete().eq('id', grave);
+                    await db.from('characters').delete().eq('id', revive);
+                    await loadCharacters();
+                    updateGraveyard();
+                    $modalChar.classList.remove('hidden');
+                    return;
+                }
+            });
+
+            $('btn-create-char').onclick = () => $modalChar.classList.remove('hidden');
+            $('btn-cancel-char').onclick = () => $modalChar.classList.add('hidden');
+            $('btn-submit-char').onclick = submitCharacter;
+            $('btn-cancel-report').onclick = () => $modalReport.classList.add('hidden');
+            $('btn-submit-report').onclick = submitReport;
+            $('btn-graveyard').onclick = () => $('graveyard').classList.toggle('hidden');
+            $('btn-guide').onclick = () => $('guide-panel').classList.toggle('hidden');
+            $sendBtn.onclick = sendMessage;
+            $chatInput.onkeydown = e => { if (e.key === 'Enter') sendMessage(); };
+            $voiceBtn.onmousedown = startRecording;
+            $voiceBtn.onmouseup = stopRecording;
+            $voiceBtn.onmouseleave = stopRecording;
+            $voiceBtn.ontouchstart = e => { e.preventDefault();
+                startRecording(); };
+            $voiceBtn.ontouchend = e => { e.preventDefault();
+                stopRecording(); };
+            $speakAs.onchange = function() {
+                currentCharacterId = this.value || null;
+                if (currentCharacterId) localStorage.setItem('liars_world_current_char', currentCharacterId);
+                else localStorage.removeItem('liars_world_current_char');
+                updateUI();
+            };
+
+            async function checkGraveyardTimers() {
+                const { data } = await db.from('graveyard').select('*').eq('revivable', false);
+                if (!data) return;
+                data.forEach(async g => {
+                    if ((Date.now() - new Date(g.death_time).getTime()) > 600000) {
+                        await db.from('graveyard').update({ revivable: true }).eq('id', g.id);
+                    }
+                });
+            }
+
+            // 启动
+            (async function init() {
+                await loadCharacters();
+                renderLocations();
+                updateSpeakAsList();
+                updateGraveyard();
+                updateGuidePanel();
+                subscribeAll();
+                setInterval(checkGraveyardTimers, 5000);
+                const savedCharId = localStorage.getItem('liars_world_current_char');
+                if (savedCharId && currentCharacters.find(c => c.id === savedCharId && c.alive)) {
+                    currentCharacterId = savedCharId;
+                    updateUI();
+                }
+                console.log('✅ Liar\'s World Ready');
+            })();
+        })();
+    </script>
+</body>
+</html>
